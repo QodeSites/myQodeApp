@@ -374,19 +374,19 @@ const SidebarContentMobile = ({ onClose }: SidebarContentMobileProps) => {
           </View>
         </AccordionTrigger>
         <AccordionContent className="ml-4">
-          <NavLink url="/(investor)/vault" onClick={onClose}
+          <NavLink url="/(investor)/trust/vault" onClick={onClose}
                   icon={<FileKey size={16} />}>
             <Text>Client Document Vault</Text>
           </NavLink>
-          <NavLink url="/(investor)/risk-management" onClick={onClose}
+          <NavLink url="/(investor)/trust/risk-management" onClick={onClose}
                   icon={<Shield size={16} />}>
             <Text>Risk Management</Text>
           </NavLink>
-          <NavLink url="/(investor)/grievance-redressal" onClick={onClose}
+          <NavLink url="/(investor)/trust/grievance-redressal" onClick={onClose}
                   icon={<AlertTriangle size={16} />}>
             <Text>Grievance Redressal</Text>
           </NavLink>
-          <NavLink url="/(investor)/faqs-glossary" onClick={onClose} icon={<HelpCircle size={16} />}>
+          <NavLink url="/(investor)/trust/faqs-glossary" onClick={onClose} icon={<HelpCircle size={16} />}>
             <Text>FAQs & Glossary</Text>
           </NavLink>
         </AccordionContent>
