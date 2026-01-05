@@ -155,12 +155,12 @@ export default function Page() {
 
   return (
     <Container className="p-4 rounded-lg bg-card h-fit">
-      <View className="mb-6">
-        <Text className="text-xl font-bold text-foreground flex flex-row items-center gap-2">
-          Account Documents
+      <View className="flex gap-2">
+        <Text className="flex gap-2 items-center font-serif text-2xl text-foreground">
+        Account Documents
         </Text>
-        <Text className="text-sm text-muted-foreground mt-1">
-          Access important documents related to your Qode PMS account.
+        <Text className="mb-2 text-lg text-muted-foreground">
+        Access important documents related to your Qode PMS account.
         </Text>
       </View>
 

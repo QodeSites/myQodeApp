@@ -7,7 +7,7 @@ type ButtonProps = {
   className?: string;
   style?: object;
   disabled?: boolean;
-  variant?: "default" | "outline" | "ghost" | "destructive";
+  variant?: "default" | "outline" | "ghost" | "destructive" | "link";
   size?: "sm" | "md" | "lg";
 };
 
@@ -19,6 +19,7 @@ const variantClassMap: Record<
   outline: "bg-transparent border border-primary text-primary",
   ghost: "bg-transparent border-0 text-primary",
   destructive: "bg-destructive text-white border border-destructive",
+  link: "bg-transparent border-0 text-primary underline underline-offset-4 px-0", // Added 'link' variant
 };
 
 const sizeClassMap: Record<
@@ -45,7 +46,7 @@ export function Button({
 
   // Choose contrasting text color for variants (basic heuristic)
   const textColor =
-    variant === "outline" || variant === "ghost"
+    variant === "outline" || variant === "ghost" || variant === "link"
       ? "text-primary"
       : variant === "destructive"
       ? "text-white"
