@@ -1,7 +1,7 @@
 import { useClient } from "@/context/ClientContext";
 import useLogout from "@/hooks/logout";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import React, { ReactNode, useState } from "react";
 import { FlatList, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -38,6 +38,8 @@ interface NavLinkProps {
 
 const NavLink = ({ children, url, onClick, icon }: NavLinkProps) => {
   const router = useRouter();
+  const pathname = usePathname();
+  const fullPathname = pathname.startsWith("/(investor)") ? pathname : `/(investor)${pathname}`;
 
   const handlePress = () => {
     router.push(url as any);
@@ -45,11 +47,40 @@ const NavLink = ({ children, url, onClick, icon }: NavLinkProps) => {
   };
 
   return (
-    <Pressable onPress={handlePress} hitSlop={10} className="py-2 flex flex-row items-center gap-2">
+    <Pressable
+      onPress={handlePress}
+      hitSlop={10}
+      className={[
+        "p-2 flex flex-row items-center gap-2 rounded-lg",
+        fullPathname === url ? "bg-background" : "",
+      ].join(" ")}
+    >
       {icon && (
-        <View className="mr-2">{icon}</View>
+        <View
+          className="mr-2"
+          style={{
+            opacity: fullPathname === url ? 1 : 0.7,
+          }}
+        >
+          {React.isValidElement(icon)
+            ? React.cloneElement(
+                icon as React.ReactElement<any>,
+                {
+                  ...(icon.props || {}),
+                  color: fullPathname === url ? "#1e293b" : "#efecd3"
+                }
+              )
+            : icon}
+        </View>
       )}
-      <Text className="text-base text-background">{children}</Text>
+      <Text
+        className={[
+          "text-base",
+          fullPathname === url ? "text-primary" : "text-secondary"
+        ].join(" ")}
+      >
+        {children}
+      </Text>
     </Pressable>
   );
 };
@@ -225,9 +256,29 @@ interface SidebarContentMobileProps {
 }
 
 const SidebarContentMobile = ({ onClose }: SidebarContentMobileProps) => {
-  const [openAccordions, setOpenAccordions] = useState<string[]>([
-    "portfolio",
-  ]);
+
+  const pathname = usePathname();
+  
+  const getInitialAccordion = () => {
+    if (pathname.includes('/portfolio')) return ['portfolio'];
+    if (pathname.includes('/about')) return ['about'];
+    if (pathname.includes('/portal-guide') || 
+        pathname.includes('/account-services') || 
+        pathname.includes('/account-mapping') ||
+        pathname.includes('/service-cadence')) return ['experience'];
+    if (pathname.includes('/engagement')) return ['engagement'];
+    if (pathname.includes('/vault') || 
+        pathname.includes('/risk-management') || 
+        pathname.includes('/grievance-redressal') ||
+        pathname.includes('/faqs-glossary')) return ['trust'];
+    return ['portfolio']; // default
+  };
+
+  const [openAccordions, setOpenAccordions] = useState<string[]>(getInitialAccordion());
+
+  React.useEffect(() => {
+    setOpenAccordions(getInitialAccordion());
+  }, [pathname]);
 
   return (
     <Accordion value={openAccordions} onValueChange={setOpenAccordions}>
@@ -239,11 +290,11 @@ const SidebarContentMobile = ({ onClose }: SidebarContentMobileProps) => {
           </View>
         </AccordionTrigger>
         <AccordionContent className="ml-4">
-          <NavLink url="/(investor)/portfolio/performance" onClick={onClose} icon={<BarChart3 size={16} color="#efecd3" />}>
-            <Text className="text-secondary">Performance</Text>
+          <NavLink url="/(investor)/portfolio/performance" onClick={onClose} icon={<BarChart3 size={16} />}>
+            <Text>Performance</Text>
           </NavLink>
-          <NavLink url="/(investor)/portfolio/snapshot" onClick={onClose} icon={<BookOpen size={16} color="#efecd3" />}>
-            <Text className="text-secondary">Snapshot</Text>
+          <NavLink url="/(investor)/portfolio/snapshot" onClick={onClose} icon={<BookOpen size={16} />}>
+            <Text>Snapshot</Text>
           </NavLink>
         </AccordionContent>
       </AccordionItem>
@@ -256,14 +307,17 @@ const SidebarContentMobile = ({ onClose }: SidebarContentMobileProps) => {
           </View>
         </AccordionTrigger>
         <AccordionContent className="ml-4">
-          <NavLink url="/(investor)/about/foundation" onClick={onClose} icon={<Building2 size={16} color="#efecd3" />}>
-            <Text className="text-secondary">Foundation</Text>
+          <NavLink url="/(investor)/about/qode-philosophy" onClick={onClose} icon={<Building2 size={16} />}>
+            <Text>Qode Philosophy</Text>
           </NavLink>
-          <NavLink url="/(investor)/about/strategy-snapshot" onClick={onClose} icon={<Target size={16} color="#efecd3" />}>
-            <Text className="text-secondary">Strategy Snapshot</Text>
+          <NavLink url="/(investor)/about/foundation" onClick={onClose} icon={<Building2 size={16} />}>
+            <Text>Foundation</Text>
           </NavLink>
-          <NavLink url="/(investor)/about/your-team" onClick={onClose} icon={<Users size={16} color="#efecd3" />}>
-            <Text className="text-secondary">Your Team At Qode</Text>
+          <NavLink url="/(investor)/about/strategy-snapshot" onClick={onClose} icon={<Target size={16} />}>
+            <Text>Strategy Snapshot</Text>
+          </NavLink>
+          <NavLink url="/(investor)/about/your-team" onClick={onClose} icon={<Users size={16} />}>
+            <Text>Your Team At Qode</Text>
           </NavLink>
         </AccordionContent>
       </AccordionItem>
@@ -276,17 +330,17 @@ const SidebarContentMobile = ({ onClose }: SidebarContentMobileProps) => {
           </View>
         </AccordionTrigger>
         <AccordionContent className="ml-4">
-          <NavLink url="/(investor)/portal-guide" onClick={onClose} icon={<BookOpen size={16} color="#efecd3" />}>
-            <Text className="text-secondary">Investor Portal Guide</Text>
+          <NavLink url="/(investor)/experience/portal-guide" onClick={onClose} icon={<BookOpen size={16} />}>
+            <Text>Investor Portal Guide</Text>
           </NavLink>
-          <NavLink url="/(investor)/account-services" onClick={onClose} icon={<Settings size={16} color="#efecd3" />}>
-            <Text className="text-secondary">Account Services</Text>
+          <NavLink url="/(investor)/experience/account-services" onClick={onClose} icon={<Settings size={16} />}>
+            <Text>Account Services</Text>
           </NavLink>
-          <NavLink url="/(investor)/account-mapping" onClick={onClose} icon={<Users size={16} color="#efecd3" />}>
-            <Text className="text-secondary">Account Mapping</Text>
+          <NavLink url="/(investor)/experience/account-mapping" onClick={onClose} icon={<Users size={16} />}>
+            <Text>Account Mapping</Text>
           </NavLink>
-          <NavLink url="/(investor)/service-cadence" onClick={onClose} icon={<Users size={16} color="#efecd3" />}>
-            <Text className="text-secondary">Service Cadence</Text>
+          <NavLink url="/(investor)/experience/service-cadence" onClick={onClose} icon={<Users size={16} />}>
+            <Text>Service Cadence</Text>
           </NavLink>
         </AccordionContent>
       </AccordionItem>
@@ -300,14 +354,14 @@ const SidebarContentMobile = ({ onClose }: SidebarContentMobileProps) => {
           </View>
         </AccordionTrigger>
         <AccordionContent className="ml-4">
-          <NavLink url="/(investor)/engagement/your-voice-matters" onClick={onClose} icon={<MessageSquare size={16} color="#efecd3" />}>
-            <Text className="text-secondary">Your Voice Matters</Text>
+          <NavLink url="/(investor)/engagement/your-voice-matters" onClick={onClose} icon={<MessageSquare size={16} />}>
+            <Text>Your Voice Matters</Text>
           </NavLink>
-          <NavLink url="/(investor)/engagement/referral-program" onClick={onClose} icon={<Gift size={16} color="#efecd3" />}>
-            <Text className="text-secondary">Referral Program</Text>
+          <NavLink url="/(investor)/engagement/referral-program" onClick={onClose} icon={<Gift size={16} />}>
+            <Text>Referral Program</Text>
           </NavLink>
-          <NavLink url="/(investor)/engagement/insights-and-events" onClick={onClose} icon={<Calendar size={16} color="#efecd3" />}>
-            <Text className="text-secondary">Insights & Events</Text>
+          <NavLink url="/(investor)/engagement/insights-and-events" onClick={onClose} icon={<Calendar size={16} />}>
+            <Text>Insights & Events</Text>
           </NavLink>
         </AccordionContent>
       </AccordionItem>
@@ -321,19 +375,19 @@ const SidebarContentMobile = ({ onClose }: SidebarContentMobileProps) => {
         </AccordionTrigger>
         <AccordionContent className="ml-4">
           <NavLink url="/(investor)/vault" onClick={onClose}
-                  icon={<FileKey size={16} color="#efecd3" />}>
-            <Text className="text-secondary">Client Document Vault</Text>
+                  icon={<FileKey size={16} />}>
+            <Text>Client Document Vault</Text>
           </NavLink>
           <NavLink url="/(investor)/risk-management" onClick={onClose}
-                  icon={<Shield size={16} color="#efecd3" />}>
-            <Text className="text-secondary">Risk Management</Text>
+                  icon={<Shield size={16} />}>
+            <Text>Risk Management</Text>
           </NavLink>
           <NavLink url="/(investor)/grievance-redressal" onClick={onClose}
-                  icon={<AlertTriangle size={16} color="#efecd3" />}>
-            <Text className="text-secondary">Grievance Redressal</Text>
+                  icon={<AlertTriangle size={16} />}>
+            <Text>Grievance Redressal</Text>
           </NavLink>
-          <NavLink url="/(investor)/faqs-glossary" onClick={onClose} icon={<HelpCircle size={16} color="#efecd3" />}>
-            <Text className="text-secondary">FAQs & Glossary</Text>
+          <NavLink url="/(investor)/faqs-glossary" onClick={onClose} icon={<HelpCircle size={16} />}>
+            <Text>FAQs & Glossary</Text>
           </NavLink>
         </AccordionContent>
       </AccordionItem>
