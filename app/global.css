@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #efecd3;
+  --foreground: #002017;
+
+  --card: #f7f5e9;
+  --card-foreground: #37584f;
+
+  --popover: #f7f5e9;
+  --popover-foreground: #002017;
+
+  --primary: #02422b;                /* logo-green */
+  --primary-foreground: #dabd38;     /* gold accent */
+
+  --secondary: #efecd3;
+  --secondary-foreground: #02422b;
+
+  --muted: #efecd3;
+  --muted-foreground: #37584f;
+
+  --accent: #dabd38;
+  --accent-foreground: #02422b;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+
+  --border: #37584f;
+  --input: #efecd3;
+  --ring: #02422b;
+
+  --radius: 0.75rem;
+
+  /* Sidebar helpers */
+  --sidebar: #02422b;
+  --sidebar-foreground: #002017;
+  --sidebar-primary: #f7f4e4;
+  --sidebar-primary-foreground: #dabd38;
+  --sidebar-accent: #e7e2c0;
+  --sidebar-accent-foreground: #02422b;
+  --sidebar-border: #d6d2b5;
+  --sidebar-ring: #02422b;
+}
+  
+  /* ---------------------------
+     Brand Tokens (DARK)
+  ----------------------------*/
+.dark {
+  --background: #0e1512;
+  --foreground: #f3f5f4;
+
+  --card: #1a201d;                   /* better contrast on dark */
+  --card-foreground: #f3f5f4;
+
+  --popover: #0e1512;
+  --popover-foreground: #f3f5f4;
+
+  --primary: #02422b;
+  --primary-foreground: #dabd38;     /* keep gold accent for contrast */
+
+  --secondary: #1a201d;
+  --secondary-foreground: #f3f5f4;
+
+  --muted: #1a201d;
+  --muted-foreground: #c6d0cb;
+
+  --accent: #1a201d;
+  --accent-foreground: #f3f5f4;
+
+  --destructive: #b91c1c;
+  --destructive-foreground: #fef2f2;
+
+  --border: #2b3a35;
+  --input: #2b3a35;
+  --ring: #dabd38;
+
+  --sidebar: #1a201d;
+  --sidebar-foreground: #f3f5f4;
+  --sidebar-primary: #dabd38;
+  --sidebar-primary-foreground: #02422b;
+  --sidebar-accent: #18201c;
+  --sidebar-accent-foreground: #f3f5f4;
+  --sidebar-border: #2b3a35;
+  --sidebar-ring: #dabd38;
+}
