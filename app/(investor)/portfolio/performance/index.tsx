@@ -20,8 +20,14 @@ import {
   TrendingUp,
   Wallet
 } from "lucide-react-native";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Text, View } from "react-native";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { ScrollView, Switch, Text, View } from "react-native";
 import {
   VictoryAxis,
   VictoryChart,
@@ -32,7 +38,6 @@ import {
 // --- Y Domain Calculation Utility ---
 const calculateYDomain = (data: number[], paddingPercent: number = 5) => {
   if (data.length === 0) return [0, 100];
-  console.log(data)
   const min = Math.min(...data);
   const max = Math.max(...data);
   const range = max - min;
@@ -120,6 +125,44 @@ type CashFlowData = {
   cash_in_out?: number;
 };
 
+type TrailingReturns = { [k: string]: number | null | undefined };
+type Metrics = {
+  trailing_returns?: TrailingReturns;
+  quaterly_returns?: {
+    percentage: Record<string, Record<string, number | null>>;
+    cash: Record<string, Record<string, number | null>>;
+  };
+  monthly_returns?: {
+    percentage: Record<string, Record<string, number | null>>;
+    cash: Record<string, Record<string, number | null>>;
+  };
+  "Since Inception"?: number | null;
+  MDD?: number | null;
+  Drawdown?: number | null;
+};
+
+type BenchmarkMetrics = {
+  trailing_returns?: TrailingReturns;
+  "Since Inception"?: number | null;
+  MDD?: number | null;
+  Drawdown?: number | null;
+};
+
+const trailingPeriods = [
+  { key: "1W", label: "1 Week" },
+  { key: "10D", label: "10 Day" },
+  { key: "1M", label: "1 Month" },
+  { key: "3M", label: "3 Months" },
+  { key: "6M", label: "6 Months" },
+  { key: "1Y", label: "1 Year" },
+  { key: "Current DD", label: "Current DD" },
+  { key: "Max DD", label: "Max DD" },
+  { key: "Since Inception", label: "Since Inception" }
+];
+
+const NAME_COLUMN_WIDTH = 140;
+const PERIOD_COLUMN_WIDTH = 90;
+
 const formatCurrency = (
   value: number | string | undefined | null
 ): string => {
@@ -132,6 +175,9 @@ const formatCurrency = (
     maximumFractionDigits: 2,
   }).format(Number(value));
 };
+
+const formatPct = (x: number | null | undefined) =>
+  x === null || x === undefined || isNaN(Number(x)) ? "--" : Number(x).toFixed(2) + "%";
 
 const sanitizeName = (name: string | undefined | null): string => {
   if (!name || name === "null" || name.includes("null")) {
@@ -239,14 +285,422 @@ const CashFlowRow = React.memo(function CashFlowRow({
   );
 });
 
+function isPositiveReturn(val: any) {
+  return val !== undefined && val !== null && val > 0;
+}
+
+function isNegativeReturn(val: any) {
+  return val !== undefined && val !== null && val < 0;
+}
+
+function formatReturn(val: any) {
+  if (val === undefined || val === null || isNaN(Number(val))) return '--';
+  return Number(val).toFixed(2) + '%';
+}
+
+// -- Helper for months/quarters labels --
+function getMonthName(n: string | number) {
+  const int = typeof n === "string" ? parseInt(n, 10) : n;
+  return (
+    [
+      "",
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ][int] || String(n)
+  );
+}
+function getQuarterLabel(q: string) {
+  if (q === "Q1") return "Q1";
+  if (q === "Q2") return "Q2";
+  if (q === "Q3") return "Q3";
+  if (q === "Q4") return "Q4";
+  if (q.toLowerCase() === "total") return "Total";
+  return q;
+}
+
+// --- Monthly & Quarterly Returns Table Component ---
+const PeriodicReturnsTable = React.memo(function PeriodicReturnsTable({
+  metrics,
+  type, // "monthly" | "quaterly"
+  mode, // "percentage" | "cash"
+  onModeChange
+}: {
+  metrics: Metrics | null | undefined,
+  type: "monthly" | "quaterly",
+  mode: "percentage" | "cash",
+  onModeChange?: (mode: "percentage" | "cash") => void,
+}) {
+  if (!metrics) return null;
+  let returnsData;
+  if (type === "monthly") {
+    returnsData = metrics.monthly_returns;
+  } else if (type === "quaterly") {
+    returnsData = metrics.quaterly_returns;
+  } else {
+    returnsData = {};
+  }
+  const currentData: Record<string, Record<string, number | null>> =
+    (returnsData ? returnsData[mode] : {}) || {};
+  // Get all years, sorted ascending (2024, 2025, 2026, ...)
+  console.log(currentData,"========================currentData")
+  const years = Object.keys(currentData).sort((a, b) => Number(a) - Number(b));
+
+  // Get all periods = months (1..12) or quarters (Q1..Q4) or "Total"
+  let allPeriods: string[] = [];
+  if (years.length > 0) {
+    // All keys appearing in any year, merged and sorted
+    const set = new Set<string>();
+    for (const y of years) {
+      Object.keys(currentData[y] || {}).forEach((k) => set.add(k));
+    }
+    allPeriods = Array.from(set);
+    // Sort periods in correct order
+    if (type === "monthly") {
+      allPeriods = allPeriods
+        .filter((m) => m !== "Total")
+        .map((m) => Number(m))
+        .sort((a, b) => a - b)
+        .map((n) => n.toString());
+      if (Object.values(currentData).some((res) => "Total" in res)) {
+        allPeriods.push("Total");
+      }
+    } else if (type === "quaterly") {
+      // order: Q1,Q2,Q3,Q4,Total
+      const q = ["Q1", "Q2", "Q3", "Q4"];
+      allPeriods = q.filter((qq) => allPeriods.includes(qq));
+      if (allPeriods.includes("Total")) allPeriods.push("Total");
+    }
+  }
+  console.log(allPeriods,"================allPeriods")
+
+  // Table header width logic
+  const periodColumnWidthPercentage = 80;
+  const periodColumnWidthCash = 120; // increased width for cash mode
+  const yearColumnWidth = 90;
+
+  return (
+    <View className="bg-card border rounded-xl shadow-sm flex gap-2 p-5 my-5">
+      <View className="flex flex-row gap-1 text-lg font-bold text-foreground mb-2 items-center">
+        <Text className="flex gap-1 text-lg font-bold text-foreground">
+          {type === "monthly" ? "Monthly Returns" : "Quarterly Returns"}
+        </Text>
+        {onModeChange && (
+          <View className="flex flex-row items-center ml-4">
+            <Text className={`text-xs font-medium mr-1 ${mode === "percentage" ? "text-primary" : "text-gray-400"}`}>%</Text>
+            <Switch
+              value={mode === "cash"}
+              onValueChange={(val) => onModeChange(val ? "cash" : "percentage")}
+              trackColor={{ true: "#008455", false: "#ddd" }}
+              thumbColor={mode === "cash" ? "#3b82f6" : "#ddd"}
+              style={{ marginHorizontal: 2 }}
+            />
+            <Text className={`text-xs font-medium ml-1 ${mode === "cash" ? "text-primary" : "text-gray-400"}`}>₹</Text>
+          </View>
+        )}
+      </View>
+      <ScrollView horizontal className="w-full overflow-x-auto">
+        <View className="min-w-full">
+          {/* Table */}
+          <View className="border-collapse divide-y border-border">
+            {/* Header row */}
+            <View className="flex flex-row bg-muted/50 border-border border-b">
+              <View
+                className="text-left px-4 py-2 text-xs font-medium text-foreground uppercase tracking-wider justify-center items-center"
+                style={{ width: yearColumnWidth }}
+              >
+                <Text>Year</Text>
+              </View>
+              {allPeriods.map((period) => (
+                <View
+                  key={period}
+                  className={`text-center px-3 py-2 font-medium text-foreground uppercase tracking-wider justify-center items-center`}
+                  style={{ width: mode === "cash" ? periodColumnWidthCash : periodColumnWidthPercentage }}
+                >
+                  <Text
+                    className="text-xs"
+                    numberOfLines={2}
+                  >
+                    {type === "monthly"
+                      ? period === "Total"
+                        ? "Total"
+                        : getMonthName(period)
+                      : getQuarterLabel(period)}
+                  </Text>
+                </View>
+              ))}
+            </View>
+            {/* Data rows: each year */}
+            {years.length === 0 ? (
+              <View className="flex flex-row items-center py-3 px-4">
+                <Text className="text-xs text-muted-foreground italic">
+                  No data available.
+                </Text>
+              </View>
+            ) : (
+              years.map((year) => (
+                <View className="flex flex-row border-border" key={year}>
+                  <View
+                    className="px-4 py-2 text-left text-xs font-semibold text-foreground justify-center items-center bg-muted/20"
+                    style={{ width: yearColumnWidth }}
+                  >
+                    <Text>{year}</Text>
+                  </View>
+                  {allPeriods.map((period) => {
+                    const val = currentData[year]?.[period];
+                    const isPct = mode === "percentage";
+                    let text = "--";
+                    let color = undefined;
+                    if (val !== null && val !== undefined && !isNaN(Number(val))) {
+                      if (isPct) {
+                        text = Number(val).toFixed(2) + "%";
+                        color = isPositiveReturn(val)
+                          ? "#008455"
+                          : isNegativeReturn(val)
+                          ? "#ef4444"
+                          : undefined;
+                      } else {
+                        // cash
+                        text = formatCurrency(val);
+                        color = isPositiveReturn(val)
+                          ? "#008455"
+                          : isNegativeReturn(val)
+                          ? "#ef4444"
+                          : undefined;
+                      }
+                    }
+                    return (
+                      <View
+                        className={`px-3 py-2 text-center justify-center items-center${!isPct ? " whitespace-nowrap" : ""}`}
+                        key={period}
+                        style={{ width: isPct ? periodColumnWidthPercentage : periodColumnWidthCash }}
+                      >
+                        {/* Only for cash mode, set numberOfLines={1} and ellipsizeMode so value stays on one line */}
+                        {isPct ? (
+                          <Text style={{ color }}>{text}</Text>
+                        ) : (
+                          <Text style={{ color }} numberOfLines={1} ellipsizeMode="tail">{text}</Text>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              ))
+            )}
+          </View>
+        </View>
+      </ScrollView>
+      {/* <Text className="text-gray-400 font-sans text-xs mt-2">
+        {mode === "percentage"
+          ? "Returns shown as % (absolute if less than 1 year, CAGR if more than 1 year)"
+          : "Returns shown in cash (₹) for each period."}
+      </Text> */}
+    </View>
+  );
+});
+
+const TrailingReturnsTable = ({
+  metrics,
+  benchmarkMetrics,
+  colors,
+  benchmarkColor,
+  periods = [
+    { key: "1W", label: "1 Week" },
+    { key: "10D", label: "10 Day" },
+    { key: "1M", label: "1 Month" },
+    { key: "3M", label: "3 Months" },
+    { key: "6M", label: "6 Months" },
+    { key: "1Y", label: "1 Year" },
+    { key: "Current DD", label: "Current DD" },
+    { key: "Max DD", label: "Max DD" },
+    { key: "Since Inception", label: "Since Inception" }
+  ]
+}: {
+  metrics: Metrics | null | undefined,
+  benchmarkMetrics: BenchmarkMetrics | null | undefined,
+  colors: any,
+  benchmarkColor: string,
+  periods?: { key: string; label: string }[]
+}) => {
+  if (!metrics) return null;
+  const trailingReturns = (metrics?.trailing_returns || {}) as { [key: string]: number | null | undefined };
+  const trailingReturnsBenchmark = (benchmarkMetrics && (benchmarkMetrics?.trailing_returns || {})) as { [key: string]: number | null | undefined } | undefined;
+
+  const nameColumnWidth = 140;
+  const periodColumnWidth = 96;
+
+  const portfolioCurrentDD = metrics?.Drawdown !== undefined && metrics?.Drawdown !== null ? Math.abs(Number(metrics.Drawdown)) : null;
+  const portfolioMaxDD = metrics?.MDD !== undefined && metrics?.MDD !== null ? Math.abs(Number(metrics.MDD)) : null;
+
+  const benchmarkCurrentDD = benchmarkMetrics && benchmarkMetrics?.Drawdown !== undefined && benchmarkMetrics?.Drawdown !== null ? Math.abs(Number(benchmarkMetrics.Drawdown)) : null;
+  const benchmarkMaxDD = benchmarkMetrics && benchmarkMetrics?.MDD !== undefined && benchmarkMetrics?.MDD !== null ? Math.abs(Number(benchmarkMetrics.MDD)) : null;
+
+  // Merge Since Inception/MDD keys from metrics also, if not already in trailingReturns
+  if (!("Since Inception" in trailingReturns))
+    trailingReturns["Since Inception"] = metrics["Since Inception"];
+  if (!("Since Inception" in (trailingReturnsBenchmark || {})) && benchmarkMetrics)
+    (trailingReturnsBenchmark as any)["Since Inception"] = benchmarkMetrics["Since Inception"];
+
+  return (
+    <View className="bg-card border rounded-xl shadow-sm flex gap-2 p-5">
+      <View className="flex flex-row gap-1 text-lg font-bold text-foreground">
+        <Text className="flex gap-1 text-lg font-bold text-foreground">Trailing Returns & Drawdown</Text>
+      </View>
+      <ScrollView horizontal className="w-full overflow-x-auto">
+        <View className="min-w-full">
+          {/* Table structure */}
+          <View className="border-collapse divide-y border-border">
+            {/* Head */}
+            <View className="bg-muted">
+              <View className="flex flex-row bg-muted/50 border-border border-b">
+                <View
+                  className="text-left px-4 py-2 text-sm font-medium text-foreground uppercase tracking-wider justify-center items-center"
+                  style={{ width: nameColumnWidth }}
+                >
+                  <Text className="text-left text-sm font-medium text-foreground uppercase tracking-wider">Name</Text>
+                </View>
+                {periods.map((period) => (
+                  <View
+                    key={period.key}
+                    className={`text-center px-4 py-2 font-medium text-foreground uppercase tracking-wider ${
+                      period.key === "Current DD" ? "border-l border-border" : ""
+                    } justify-center items-center`}
+                    style={{ width: periodColumnWidth }}
+                  >
+                    <Text
+                      className={`text-xs ${period.key === 'Current DD' || period.key === 'Max DD' || period.key === 'Since Inception' ? 'whitespace-normal break-words' : 'whitespace-nowrap'}`}
+                      numberOfLines={3}
+                    >
+                      {period.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+            {/* Body */}
+            <View className="divide-y divide-border">
+              {/* Portfolio */}
+              <View className="flex flex-row border-border">
+                <View
+                  className="px-4 py-3 text-left whitespace-nowrap font-medium text-foreground justify-center items-center"
+                  style={{ width: nameColumnWidth }}
+                >
+                  <Text className="text-left font-medium text-foreground">Portfolio (%)</Text>
+                </View>
+                {periods.map((period) => {
+                  let rawValue: any;
+                  let displayValue: any;
+                  let cellStyle: any = {};
+
+                  if (period.key === 'Current DD') {
+                    rawValue = portfolioCurrentDD;
+                    displayValue = rawValue !== null && rawValue !== undefined ? `-${Number(rawValue).toFixed(2)}%` : "--";
+                    cellStyle = { color: '#ef4444' };
+                  } else if (period.key === 'Max DD') {
+                    rawValue = portfolioMaxDD;
+                    displayValue = rawValue !== null && rawValue !== undefined ? `-${Number(rawValue).toFixed(2)}%` : "--";
+                    cellStyle = { color: '#ef4444' };
+                  } else if (period.key === 'Since Inception') {
+                    rawValue = trailingReturns['Since Inception'];
+                    displayValue = formatReturn(trailingReturns['Since Inception']);
+                    cellStyle = isPositiveReturn(rawValue)
+                      ? { color: colors.strategy }
+                      : isNegativeReturn(rawValue)
+                      ? { color: '#ef4444' }
+                      : {};
+                  } else {
+                    rawValue = trailingReturns[period.key];
+                    displayValue = formatReturn(trailingReturns[period.key]);
+                    cellStyle = isPositiveReturn(rawValue)
+                      ? { color: colors.strategy }
+                      : isNegativeReturn(rawValue)
+                      ? { color: '#ef4444' }
+                      : {};
+                  }
+                  return (
+                    <View
+                      key={period.key}
+                      className={`px-4 py-3 text-center whitespace-nowrap ${period.key === "Current DD" ? "border-l border-border" : ""} justify-center items-center`}
+                      style={{ width: periodColumnWidth }}
+                    >
+                      <Text style={cellStyle}>
+                        {displayValue}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+              {/* Benchmark row */}
+              {trailingReturnsBenchmark && (
+                <View className="flex flex-row border-border">
+                <View
+                  className="px-4 py-3 text-left whitespace-nowrap font-medium text-foreground justify-center items-center"
+                  style={{ width: nameColumnWidth }}
+                >
+                  <Text className="text-left font-medium text-foreground">BSE 500 (%)</Text>
+                  </View>
+                  {periods.map((period) => {
+                    let rawValue: any;
+                    let displayValue: any;
+                    let cellStyle: any = {};
+
+                    if (period.key === 'Current DD') {
+                      rawValue = benchmarkCurrentDD;
+                      displayValue = rawValue !== null && rawValue !== undefined ? `-${Number(rawValue).toFixed(2)}%` : "--";
+                      cellStyle = { color: '#ef4444' };
+                    } else if (period.key === 'Max DD') {
+                      rawValue = benchmarkMaxDD;
+                      displayValue = rawValue !== null && rawValue !== undefined ? `-${Number(rawValue).toFixed(2)}%` : "--";
+                      cellStyle = { color: '#ef4444' };
+                    } else if (period.key === 'Since Inception') {
+                      rawValue = trailingReturnsBenchmark['Since Inception'];
+                      displayValue = formatReturn(trailingReturnsBenchmark['Since Inception']);
+                      cellStyle = isPositiveReturn(rawValue)
+                        ? { color: benchmarkColor }
+                        : isNegativeReturn(rawValue)
+                        ? { color: '#ef4444' }
+                        : {};
+                    } else {
+                      rawValue = trailingReturnsBenchmark[period.key];
+                      displayValue = formatReturn(trailingReturnsBenchmark[period.key]);
+                      cellStyle = isPositiveReturn(rawValue)
+                        ? { color: benchmarkColor }
+                        : isNegativeReturn(rawValue)
+                        ? { color: '#ef4444' }
+                        : {};
+                    }
+                    return (
+                      <View
+                        key={period.key}
+                    className={`px-4 py-3 text-center whitespace-nowrap ${period.key === "Current DD" ? "border-l border-border" : ""} justify-center items-center`}
+                    style={{ width: periodColumnWidth }}
+                      >
+                        <Text style={cellStyle}>
+                          {displayValue}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+        
+      </ScrollView>
+      <Text className="text-gray-400 font-sans text-xs">Returns: Periods under 1 year are presented as absolute, while those over 1 year are annualized (CAGR)</Text>
+    </View>
+  );
+};
+
 export default function PortfolioPerformanceScreen() {
   const { clients, loading: clientsLoading } = useClient();
-  // Using refs for values that only affect logic and not directly UI render to prevent extra re-renders
   const [chartWidth, setChartWidth] = useState<number>(0);
   const [selectedAccount, setSelectedAccount] = useState<string>("");
   const [familyAccounts, setFamilyAccounts] = useState<FamilyAccount[]>([]);
   const [currentData, setCurrentData] = useState<CurrentDataType | null>(null);
   const [historicalData, setHistoricalData] = useState<HistoricalData[]>([]);
+  const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [benchmarkMetrics, setBenchmarkMetrics] = useState<BenchmarkMetrics | null>(null);
   const [benchmarkhistoricalData, setBenchmarkHistoricalData] = useState<
     BenchmarkHistoricalData[]
   >([]);
@@ -256,10 +710,12 @@ export default function PortfolioPerformanceScreen() {
   const [cashFlowData, setCashFlowData] = useState<CashFlowData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Track initialization
+  // State for monthly/quaterly toggle
+  const [monthlyMode, setMonthlyMode] = useState<"percentage" | "cash">("percentage");
+  const [quaterlyMode, setQuaterlyMode] = useState<"percentage" | "cash">("percentage");
+
   const initializedRef = useRef(false);
 
-  // Avoid triggering both family fetch AND details fetch at startup, so combine into a single effect
   useEffect(() => {
     let isMounted = true;
     const fetchAll = async () => {
@@ -302,7 +758,7 @@ export default function PortfolioPerformanceScreen() {
     return () => { isMounted = false; }
   }, []);
 
-  // Only fetch details when account changes.
+  // Fetch portfolio details including metrics
   useEffect(() => {
     if (!selectedAccount) {
       setCurrentData(null);
@@ -312,11 +768,12 @@ export default function PortfolioPerformanceScreen() {
       setBenchmarkDrawdownSeries([]);
       setCashFlowData([]);
       setTotalCashValue(0);
+      setMetrics(null);
+      setBenchmarkMetrics(null);
       return;
     }
     let isMounted = true;
     setLoading(true);
-
     (async () => {
       try {
         const portfolioRes = await api.post("/api/portfolio-details", {
@@ -333,10 +790,23 @@ export default function PortfolioPerformanceScreen() {
           if (isMounted) setCurrentData(null);
         }
 
+        // Now, fetch history and metrics from pyapi
         const historyRes = await pyapi.get(
           `/client/client_portfolio_history/?client_account_code=${selectedAccount}`
         );
         const historyData = historyRes.data;
+
+        // Parse metrics for client and benchmark
+        if (historyData?.data?.client?.metrics) {
+          if (isMounted) setMetrics(historyData.data.client.metrics);
+        } else {
+          if (isMounted) setMetrics(null);
+        }
+        if (historyData?.data?.benchmark?.metrics) {
+          if (isMounted) setBenchmarkMetrics(historyData.data.benchmark.metrics);
+        } else {
+          if (isMounted) setBenchmarkMetrics(null);
+        }
 
         // --- Cash flow & NAV series ---
         if (
@@ -364,7 +834,6 @@ export default function PortfolioPerformanceScreen() {
           );
           if (isMounted) setTotalCashValue(total);
 
-          // NAV series
           if (
             historyData.data.client?.nav_series &&
             Array.isArray(historyData.data.client.nav_series)
@@ -455,6 +924,8 @@ export default function PortfolioPerformanceScreen() {
         if (isMounted) setDrawdownSeries([]);
         if (isMounted) setBenchmarkDrawdownSeries([]);
         if (isMounted) setTotalCashValue(0);
+        if (isMounted) setMetrics(null);
+        if (isMounted) setBenchmarkMetrics(null);
       } finally {
         if(isMounted) setLoading(false);
       }
@@ -464,8 +935,7 @@ export default function PortfolioPerformanceScreen() {
     };
   }, [selectedAccount]);
 
-
-  // Memoize all heavy computed values and derived chart values, using only primitive dependencies
+  // --- Chart logic below (unchanged)
   const navChartData = useMemo(() => {
     if (!historicalData || historicalData.length === 0) return [];
     const benchmark = benchmarkhistoricalData || [];
@@ -509,10 +979,8 @@ export default function PortfolioPerformanceScreen() {
   }, [historicalData, benchmarkhistoricalData]);
   const typedCurrentData: CurrentDataType | null = currentData ?? null;
 
-  // ------ Drawdown chart derived data -----
   const drawdownChartData = useMemo(() => {
     if (!drawdownSeries || drawdownSeries.length === 0) return [];
-    // Order by date (same logic as NAV chart)
     const sorted = [...drawdownSeries].sort((a, b) => {
       const da = parseDayMonthYearDateString(a.date);
       const db = parseDayMonthYearDateString(b.date);
@@ -545,7 +1013,6 @@ export default function PortfolioPerformanceScreen() {
     }));
   }, [benchmarkDrawdownSeries]);
 
-  // For x axis, derive tick values and formatters: share with nav chart x axis
   const drawdownXTickValues = useMemo(() => {
     const dataLength = drawdownChartData.length;
     if (dataLength === 0) return [];
@@ -563,7 +1030,6 @@ export default function PortfolioPerformanceScreen() {
     return dataPoint ? formatShortDate(dataPoint.date) : "";
   }, [drawdownChartData]);
 
-  // Y domain and ticks for drawdown
   const allDrawdownValues = useMemo(() => {
     const values = [
       ...drawdownChartData.map((d) => d.y),
@@ -577,11 +1043,10 @@ export default function PortfolioPerformanceScreen() {
     () => calculateYDomain(allDrawdownValues, 5),
     [allDrawdownValues]
   );
+
   const drawdownYTickValues = useMemo(() => {
     if (!drawdownYDomain || drawdownYDomain.length !== 2) return [];
-    console.log(drawdownYDomain,"================drawdownYDomain")
     const [min, max] = drawdownYDomain;
-    // const min = 0
     const numTicks = 8;
     const delta = (max - min) / (numTicks - 1);
     return Array(numTicks).fill(null).map((_, i) => {
@@ -590,9 +1055,7 @@ export default function PortfolioPerformanceScreen() {
       return val > 0 ? 0 : val;
     });
   }, [drawdownYDomain]);
-  console.log(drawdownYTickValues)
 
-  // Cache color for current strategy code using useMemo
   const strategyCode = useMemo(() =>
     (selectedAccount?.substring(0, 3)?.toUpperCase?.() as keyof typeof strategyColorConfig) || "QAW"
   , [selectedAccount]);
@@ -601,7 +1064,6 @@ export default function PortfolioPerformanceScreen() {
     [strategyCode]
   );
 
-  // ------------------- NAV performance chart code ---------------
   const navSeriesForChart = useMemo(() => {
     const validData = navChartData.filter(
       (d) =>
@@ -643,7 +1105,6 @@ export default function PortfolioPerformanceScreen() {
     return { portfolioLine, benchmarkLine, showBenchmark };
   }, [navChartData]);
 
-
   const allNavValues = useMemo(() => {
     const values = [
       ...navSeriesForChart.portfolioLine.map((d) => d.value),
@@ -671,7 +1132,6 @@ export default function PortfolioPerformanceScreen() {
     [navChartData]
   );
 
-  // cache chartDataPortfolio/Benchmark to avoid recompute unless memo input changes
   const chartDataPortfolio = useMemo(
     () => navSeriesForChart.portfolioLine.map((pt, ix) => ({
       x: ix,
@@ -692,7 +1152,6 @@ export default function PortfolioPerformanceScreen() {
     [navSeriesForChart]
   );
 
-  // Calculate tick values for X axis - show 6 evenly spaced labels
   const xTickValues = useMemo(() => {
     const dataLength = chartDataPortfolio.length;
     if (dataLength === 0) return [];
@@ -712,7 +1171,6 @@ export default function PortfolioPerformanceScreen() {
     return dataPoint ? formatShortDate(dataPoint.date) : "";
   }, [navSeriesForChart]);
 
-  // Calculate Y axis tick values
   const yTickValues = useMemo(() => {
     if (!yDomain || yDomain.length !== 2) return [];
     const [min, max] = yDomain;
@@ -768,7 +1226,7 @@ export default function PortfolioPerformanceScreen() {
     </View>
   ), [navSeriesForChart.showBenchmark, colors.strategy]);
 
-  // --- Drawdown Chart Section (new) ---
+  // Drawdown chart legend
   const drawdownLegend = useMemo(() => (
     <View
       style={{
@@ -816,7 +1274,8 @@ export default function PortfolioPerformanceScreen() {
     </View>
   ), [benchmarkDrawdownChartData.length, colors.strategy]);
 
-  // ----- NAV Chart -----
+  // Chart sections unchanged
+
   const chartSection = useMemo(() => (
     <View className="bg-card border rounded-xl shadow-sm p-5">
       <View className="flex flex-row gap-1 text-lg font-bold text-foreground">
@@ -948,7 +1407,6 @@ export default function PortfolioPerformanceScreen() {
     </View>
   ), [chartWidth, navSeriesForChart, chartDataPortfolio, chartDataBenchmark, xTickValues, xTickFormat, yTickValues, colors.strategy, chartLegend]);
 
-  // ----- Drawdown Chart Section -----
   const drawdownSection = useMemo(() => (
     <View className="bg-card border rounded-xl shadow-sm p-5 mt-5">
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
@@ -1013,8 +1471,8 @@ export default function PortfolioPerformanceScreen() {
                         strokeDasharray: "4,4",
                       },
                     }}
-                    crossAxis={true} // Ensure x axis (bottom) is drawn
-                    orientation="bottom" // Force bottom orientation
+                    crossAxis={true}
+                    orientation="bottom"
                   />
 
                   <VictoryLine
@@ -1085,7 +1543,6 @@ export default function PortfolioPerformanceScreen() {
     drawdownLegend,
   ]);
 
-  // Helper function to get account label from value
   const getAccountLabel = useCallback((value: string | null | undefined): string => {
     if (!value) return "";
     if (familyAccounts && familyAccounts.length > 0) {
@@ -1095,7 +1552,6 @@ export default function PortfolioPerformanceScreen() {
     return value; // fallback to raw value if familyAccounts not loaded yet
   }, [familyAccounts]);
 
-  // Fix: Show selectedAccount value as fallback label if label not yet resolved (e.g. on hard reload)
   const selectedAccountLabel = useMemo(() => {
     return getAccountLabel(selectedAccount) || null;
   }, [selectedAccount, getAccountLabel]);
@@ -1106,6 +1562,7 @@ export default function PortfolioPerformanceScreen() {
     );
   }
 
+  // Show trailing, then periodic tables, then chart, as requested
   return (
     <Container className="flex gap-2">
       <View className="flex gap-2">
@@ -1164,7 +1621,8 @@ export default function PortfolioPerformanceScreen() {
             ))}
           </SelectContent>
         </Select>
-
+        
+        {/* Existing value boxes */}
         <View className="flex flex-col gap-2">
           <View className="flex-1 min-w-[150px] bg-card border rounded-xl shadow-sm p-5">
             <View className="flex flex-row justify-between mb-2 items-center">
@@ -1246,6 +1704,29 @@ export default function PortfolioPerformanceScreen() {
             </View>
           </View>
         </View>
+
+        {/* === Trailing Returns/Drawdown Table === */}
+        <TrailingReturnsTable
+          metrics={metrics}
+          benchmarkMetrics={benchmarkMetrics}
+          colors={colors}
+          benchmarkColor={benchmarkColor}
+          periods={trailingPeriods}
+        />
+
+        {/* === Monthly/Quarterly Returns Tables with toggle === */}
+        <PeriodicReturnsTable
+          metrics={metrics}
+          type="monthly"
+          mode={monthlyMode}
+          onModeChange={setMonthlyMode}
+        />
+        <PeriodicReturnsTable
+          metrics={metrics}
+          type="quaterly"
+          mode={quaterlyMode}
+          onModeChange={setQuaterlyMode}
+        />
 
         {/* NAV Performance Chart */}
         {chartSection}
