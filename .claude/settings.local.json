@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(find 'app/\\(investor\\)' -name 'index.tsx' -exec bash -c 'echo \"\"=== $1 ===\"\" && head -50 \"\"$1\"\"' _ {} ;)",
+      "Bash(wc:*)",
+      "Bash(ls:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(pkill:*)"
+    ]
+  }
+}
