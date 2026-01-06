@@ -163,11 +163,14 @@ function getFlatRows(
   data.forEach((group) => {
     group.report_name.forEach((rn) => {
       let videoFile = videoFiles.find(
-        (file) => file.name.toLowerCase() === rn.name.toLowerCase()
+        (file) => {
+          const fileNameWithoutExt = file.name.toLowerCase().replace(/\.mp4$/, "");
+          return fileNameWithoutExt === rn.name.toLowerCase();
+        }
       );
       if (!videoFile && rn.name === "Statement of Capital Gain/Loss") {
         videoFile = videoFiles.find(
-          (file) => file.name.toLowerCase() === "statement of capital gain loss"
+          (file) => file.name.replace(/\.mp4$/, "").toLowerCase() === "statement of capital gain loss"
         );
       }
       rows.push({
@@ -577,19 +580,19 @@ export default function Page() {
         <View className="border border-primary-200 rounded-lg overflow-hidden">
           {/* Table Header (non-mobile) */}
           <View className="hidden md:flex flex-row bg-primary-100 px-3 py-2 border-b border-primary-300 rounded-t-lg">
-            <View className="w-12">
+            <View className="w-12 flex-shrink-0">
               <Text className="text-xs font-semibold text-primary-900">Sr.</Text>
             </View>
-            <View className="flex-1 px-2">
+            <View className="flex-1 min-w-[140px] px-2">
               <Text className="text-xs font-semibold text-primary-900">Type of Report</Text>
             </View>
-            <View className="flex-1 px-2">
+            <View className="flex-1 min-w-[180px] px-2">
               <Text className="text-xs font-semibold text-primary-900">Report Name</Text>
             </View>
-            <View className="w-20">
+            <View className="w-24 flex-shrink-0">
               <Text className="text-xs font-semibold text-primary-900">Snapshot</Text>
             </View>
-            <View className="w-20">
+            <View className="w-24 flex-shrink-0">
               <Text className="text-xs font-semibold text-primary-900">Tutorial</Text>
             </View>
           </View>
@@ -598,54 +601,61 @@ export default function Page() {
             return (
               <View
                 key={r.sr + "-" + r.name}
-                className="flex-col md:flex-row md:items-center p-4 border-b border-primary-100 bg-white md:bg-transparent"
+                className={`
+                  flex-col md:flex-row md:items-center p-4 border-b border-primary-100 
+                  bg-white md:bg-transparent
+                  md:gap-0
+                `}
                 style={{ gap: 12 }}
               >
-                {/* Card style for mobile, grid row for md+ */}
-                <View className="flex-col font-sans mb-3 md:mb-0 gap-2">
-                  <View className="flex flex-row justify-between mr-3">
+                {/* Responsive: Card style for mobile, table row for md+ */}
+                {/* On md+, align as columns */}
+                <View className="flex-col md:flex-row md:items-center font-sans mb-3 md:mb-0 md:w-full md:gap-1 gap-2">
+                  {/* Sr. */}
+                  <View className="flex flex-row justify-between md:w-12 md:flex-shrink-0 md:justify-center mr-3 md:mr-0">
                     <Text className="text-xs font-sans font-medium text-primary-400 md:hidden mb-1">Sr.</Text>
-                    <Text className="text-xs font-sans font-bold text-primary">{r.sr}</Text>
+                    <Text className="text-xs font-sans font-bold text-primary md:text-center">{r.sr}</Text>
                   </View>
-                  <View className="flex flex-row justify-between">
+                  {/* Type */}
+                  <View className="flex flex-row justify-between md:flex-1 md:min-w-[140px] md:px-2">
                     <Text className="text-xs font-medium font-sans text-primary-400 md:hidden mb-1">Type</Text>
-                    <Text className="text-sm font-semibold font-sans text-primary-800">{r.type}</Text>
-                   
+                    <Text className="text-sm font-semibold font-sans text-primary-800 md:text-left">{r.type}</Text>
                   </View>
-                  <View className="flex flex-col justify-between">
+                  {/* Name */}
+                  <View className="flex flex-col justify-between md:flex-1 md:min-w-[180px] md:px-2">
                     <Text className="text-xs font-medium font-sans text-primary-400 md:hidden mb-1">Name</Text>
-                    <Text className="text-sm font-semibold font-sans text-primary-800">{r.name}</Text>
+                    <Text className="text-sm font-semibold font-sans text-primary-800 md:text-left">{r.name}</Text>
                     {!!r.used_for && (
                       <Text className="text-[11px] text-primary-600">
                         <Text className="text-primary-500 font-sans">Used for:</Text> <Text className="font-medium">{r.used_for}</Text>
                       </Text>
                     )}
                   </View>
-                  <View className="flex flex-row justify-between items-center">
+                  {/* Snapshot */}
+                  <View className="flex flex-row justify-between items-center md:w-24 md:flex-shrink-0 md:justify-center">
                     <Text className="text-xs font-medium text-primary-400 font-sans md:hidden mb-1">SnapShot</Text>
-                    <View className="w-24">
+                    <View className="w-24 md:w-full">
                         <ViewLink
-                        images={snapshots}
-                        title={r.name}
-                        onClick={handleSnapshotClick}
-                        isLoading={snapshotLoading}
+                          images={snapshots}
+                          title={r.name}
+                          onClick={handleSnapshotClick}
+                          isLoading={snapshotLoading}
                         />
                     </View>
                   </View>
-                  <View className="flex flex-row justify-between items-center">
+                  {/* Tutorial */}
+                  <View className="flex flex-row justify-between items-center md:w-24 md:flex-shrink-0 md:justify-center">
                     <Text className="text-xs font-medium text-primary-400 font-sans md:hidden mb-1">Tutorial</Text>
-                    <View className="w-24">
-                    <VideoLink
-                      href={r.tutorial}
-                      title={r.name}
-                      onClick={handleVideoClick}
-                      isLoading={videoLoading}
-                    />
+                    <View className="w-24 md:w-full">
+                      <VideoLink
+                        href={r.tutorial}
+                        title={r.name}
+                        onClick={handleVideoClick}
+                        isLoading={videoLoading}
+                      />
+                    </View>
                   </View>
-                  </View>
-                  
                 </View>
-              
               </View>
             );
           })}

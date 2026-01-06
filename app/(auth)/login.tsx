@@ -3,15 +3,15 @@ import { api } from "@/api/axios";
 import { Feather } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 // Use Expo Router for navigation instead of @react-navigation/native
@@ -19,12 +19,11 @@ import { useClient } from '@/context/ClientContext';
 import { useRouter } from 'expo-router';
 
 type LoginStep = 'username' | 'password' | 'otp-verification' | 'password-setup' | 'dev-bypass';
-
-const isDevelopment = process.env.NODE_ENV === 'development';
+console.log(process.env.EXPO_PUBLIC_APP_ENV,process.env.EXPO_PUBLIC_APP_ENV === 'development')
+const isDevelopment = process.env.EXPO_PUBLIC_APP_ENV === 'development';
 
 export default function LoginScreen() {
-  const router = useRouter(); // Expo Router instance
-
+  const router = useRouter(); 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');

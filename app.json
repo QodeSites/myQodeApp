@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "myQodeApp",
-    "slug": "myQodeApp",
+    "name": "myQode",
+    "slug": "myQode",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,7 +10,12 @@
     "newArchEnabled": true,
     "bundler": "metro",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
     },
     "android": {
       "usesCleartextTraffic": true,
