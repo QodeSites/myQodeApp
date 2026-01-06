@@ -342,19 +342,17 @@ const PeriodicReturnsTable = React.memo(function PeriodicReturnsTable({
   const currentData: Record<string, Record<string, number | null>> =
     (returnsData ? returnsData[mode] : {}) || {};
   // Get all years, sorted ascending (2024, 2025, 2026, ...)
-  console.log(currentData,"========================currentData")
+  console.log(currentData, "========================currentData");
   const years = Object.keys(currentData).sort((a, b) => Number(a) - Number(b));
 
-  // Get all periods = months (1..12) or quarters (Q1..Q4) or "Total"
+  // ----- FIX: allPeriods logic for quarterly should include "Total" at end -----
   let allPeriods: string[] = [];
   if (years.length > 0) {
-    // All keys appearing in any year, merged and sorted
     const set = new Set<string>();
     for (const y of years) {
       Object.keys(currentData[y] || {}).forEach((k) => set.add(k));
     }
     allPeriods = Array.from(set);
-    // Sort periods in correct order
     if (type === "monthly") {
       allPeriods = allPeriods
         .filter((m) => m !== "Total")
@@ -365,22 +363,23 @@ const PeriodicReturnsTable = React.memo(function PeriodicReturnsTable({
         allPeriods.push("Total");
       }
     } else if (type === "quaterly") {
-      // order: Q1,Q2,Q3,Q4,Total
+      // Always include "Total" at end if any year has it
       const q = ["Q1", "Q2", "Q3", "Q4"];
-      allPeriods = q.filter((qq) => allPeriods.includes(qq));
-      if (allPeriods.includes("Total")) allPeriods.push("Total");
+      const periodsPresent = q.filter((qq) => allPeriods.includes(qq));
+      const hasTotal = Object.values(currentData).some((res) => "Total" in res);
+      allPeriods = [...periodsPresent];
+      if (hasTotal) allPeriods.push("Total");
     }
   }
-  console.log(allPeriods,"================allPeriods")
+  console.log(allPeriods, "================allPeriods");
 
-  // Table header width logic
   const periodColumnWidthPercentage = 80;
   const periodColumnWidthCash = 120; // increased width for cash mode
   const yearColumnWidth = 90;
 
   return (
     <View className="bg-card border rounded-xl shadow-sm flex gap-2 p-5 my-5">
-      <View className="flex flex-row gap-1 text-lg font-bold text-foreground mb-2 items-center">
+      <View className="flex flex-row gap-1 text-lg font-bold text-foreground mb-2 justify-between items-center">
         <Text className="flex gap-1 text-lg font-bold text-foreground">
           {type === "monthly" ? "Monthly Returns" : "Quarterly Returns"}
         </Text>
@@ -403,7 +402,7 @@ const PeriodicReturnsTable = React.memo(function PeriodicReturnsTable({
           {/* Table */}
           <View className="border-collapse divide-y border-border">
             {/* Header row */}
-            <View className="flex flex-row bg-muted/50 border-border border-b">
+            <View className="flex flex-row bg-muted border-border border-b">
               <View
                 className="text-left px-4 py-2 text-xs font-medium text-foreground uppercase tracking-wider justify-center items-center"
                 style={{ width: yearColumnWidth }}
