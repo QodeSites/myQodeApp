@@ -1564,42 +1564,40 @@ export default function PortfolioPerformanceScreen() {
   // Show trailing, then periodic tables, then chart, as requested
   return (
     <Container className="flex gap-2">
-      <View className="flex gap-2">
-        <View className="mb-8">
-          <Text className="text-2xl font-serif text-foreground">
-            Portfolio Details
+      <View className="flex gap-2 justify-center">
+        <Text className="text-2xl font-serif text-foreground">
+          Portfolio Details
+        </Text>
+        <View className="flex flex-row font-sans flex-wrap gap-1 mt-1 items-center">
+          <Text className="text-sm font-sans h-full text-muted-foreground">
+            {selectedAccountLabel ?? "Select an account"}
           </Text>
-          <View className="flex flex-row font-sans flex-wrap gap-1 mt-1 items-center">
-            <Text className="text-sm font-sans h-full text-muted-foreground">
-              {selectedAccountLabel ?? "Select an account"}
-            </Text>
-          </View>
-          {inceptionDate && latestDate ? (
-            <View className="flex flex-row flex-wrap items-center gap-3 mt-1">
-              <View className="flex flex-row items-center gap-1">
-                <Calendar size={16} color="#008455" />
-                <Text className="text-xs font-sans text-muted-foreground">
-                  Inception:
-                </Text>
-                <Text className="text-xs font-sans font-medium text-primary">
-                  {formatDate(inceptionDate)}
-                </Text>
-              </View>
-              <Text className="text-muted-foreground text-xs">•</Text>
-              <View className="flex flex-row items-center gap-1">
-                <Text className="text-xs font-sans text-muted-foreground">
-                  Data as of:
-                </Text>
-                <Text className="text-xs font-sans font-medium text-primary">
-                  {formatDate(latestDate)}
-                </Text>
-              </View>
-            </View>
-          ) : null}
         </View>
+        {inceptionDate && latestDate ? (
+          <View className="flex flex-row flex-wrap items-center gap-3 mt-1">
+            <View className="flex flex-row items-center gap-1">
+              <Calendar size={16} color="#008455" />
+              <Text className="text-xs font-sans text-muted-foreground">
+                Inception:
+              </Text>
+              <Text className="text-xs font-sans font-medium text-primary">
+                {formatDate(inceptionDate)}
+              </Text>
+            </View>
+            <Text className="text-muted-foreground text-xs">•</Text>
+            <View className="flex flex-row items-center gap-1">
+              <Text className="text-xs font-sans text-muted-foreground">
+                Data as of:
+              </Text>
+              <Text className="text-xs font-sans font-medium text-primary">
+                {formatDate(latestDate)}
+              </Text>
+            </View>
+          </View>
+        ) : null}
 
-        <Select value={selectedAccount} className="h-10" onValueChange={setSelectedAccount} placeholder="Select Account">
-          <SelectTrigger className="w-full max-w-md mb-4 h-10 border rounded-lg p-2">
+        <Select value={selectedAccount} className="h-10 w-full" onValueChange={setSelectedAccount} placeholder="Select Account">
+          <SelectTrigger className="w-full mb-4 h-10 border rounded-lg p-2">
             <SelectValue 
               placeholder="Select Account"
               formatValue={(value) => getAccountLabel(value)}

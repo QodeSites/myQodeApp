@@ -15,7 +15,8 @@
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
         }
-      }
+      },
+      "bundleIdentifier": "com.anonymous.myQode"
     },
     "android": {
       "usesCleartextTraffic": true,
@@ -26,7 +27,14 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.DOWNLOAD_WITHOUT_NOTIFICATION",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ],
+      "package": "com.anonymous.myQode"
     },
     "web": {
       "output": "static",
@@ -34,6 +42,12 @@
     },
     "plugins": [
       "expo-router",
+      ["expo-media-library",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to save files.",
+          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save files."
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -47,13 +61,19 @@
         }
       ],
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      "@config-plugins/react-native-pdf",
+      "@config-plugins/react-native-blob-util"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "78e08007-bb97-4557-b0e5-f3bf0a8b2e8b"
+      }
     }
-    
-    
   }
 }

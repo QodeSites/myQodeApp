@@ -1,40 +1,47 @@
 import { Container } from '@/components/Container';
-import { Button } from "@/components/ui/button";
-import { Linking, Text, View } from 'react-native';
+import { Linking, Pressable, Text, View } from 'react-native';
+
+function getGoogleDocsEmbedUrl(originalUrl: string) {
+  // Accepts a full pdfSrc url, returns an embedded Google Docs viewer URL.
+  if (!originalUrl) return "";
+  return `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(originalUrl)}`;
+}
 
 const policies = [
   {
     title: "Hedging Policy",
     description:
       "We use derivatives prudently to manage downside risk, not for speculation. Protective put options & hedges are employed where appropriate to safeguard portfolios against significant market declines.",
-    pdfSrc: "https://myqode.qodeinvest.com/policies/hedging-policy.pdf",
+    pdfSrc: getGoogleDocsEmbedUrl("https://myqode.qodeinvest.com/policies/hedging-policy.pdf"),
     dialogTitle: "Qode Hedging Policy",
   },
   {
     title: "Liquidity Rules",
     description: "We follow a defined liquidity policy to ensure capital is available for hedging and client needs.",
-    pdfSrc: "https://myqode.qodeinvest.com/policies/liquidity-rules.pdf",
+    pdfSrc: getGoogleDocsEmbedUrl("https://myqode.qodeinvest.com/policies/liquidity-rules.pdf"),
     dialogTitle: "Liquidity Rules",
   },
   {
     title: "Rebalance Policy",
     description: "All portfolios are rebalanced monthly, realigning holdings to strategy weights to control drift.",
-    pdfSrc: "https://myqode.qodeinvest.com/policies/rebalance-policy.pdf",
+    pdfSrc: getGoogleDocsEmbedUrl("https://myqode.qodeinvest.com/policies/rebalance-policy.pdf"),
     dialogTitle: "Rebalance Policy",
   },
   {
     title: "Concentration Limits",
     description: "We impose no sector caps; portfolios are built bottom‑up, with structural gold allocations.",
-    pdfSrc: "https://myqode.qodeinvest.com/policies/concentration-limits.pdf",
+    pdfSrc: getGoogleDocsEmbedUrl("https://myqode.qodeinvest.com/policies/concentration-limits.pdf"),
     dialogTitle: "Concentration Limits",
   },
 ];
 
-export default function Page() {
-  const handleOpenPdf = (url: string) => {
-    Linking.openURL(url);
-  };
+function openPolicy(pdfSrc: string) {
+  if (pdfSrc) {
+    Linking.openURL(pdfSrc);
+  }
+}
 
+export default function Page() {
   return (
     <Container>
       <View className="flex gap-2">
@@ -69,13 +76,17 @@ export default function Page() {
                       {p.description}
                     </Text>
                   </View>
-                  <Button
-                    variant="default"
-                    className="text-sm font-medium bg-primary p-2 rounded-lg"
-                    onPress={() => handleOpenPdf(p.pdfSrc)}
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => openPolicy(p.pdfSrc)}
                   >
-                    Click Here
-                  </Button>
+                    <Text
+                      className="text-sm font-medium bg-primary p-2 rounded-lg text-white text-center"
+                      style={{ overflow: "hidden" }}
+                    >
+                      Click Here
+                    </Text>
+                  </Pressable>
                 </View>
               </View>
             </View>

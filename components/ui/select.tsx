@@ -64,7 +64,9 @@ export function Select({
         disabled,
       }}
     >
-      <View className={className}>{children}</View>
+      <View className={`h-10 ${className}`}>
+        {children}
+      </View>
     </SelectContext.Provider>
   );
 }
@@ -79,7 +81,7 @@ export function SelectTrigger({ className = "", children }: SelectTriggerProps) 
 
   return (
     <Pressable
-      className={`select-trigger${open ? " select-trigger-open" : ""}${disabled ? " select-trigger-disabled" : ""} ${className}`}
+      className={`p-2 select-trigger${open ? " select-trigger-open" : ""}${disabled ? " select-trigger-disabled" : ""} ${className}`}
       onPress={() => !disabled && setOpen(true)}
       disabled={disabled}
     >

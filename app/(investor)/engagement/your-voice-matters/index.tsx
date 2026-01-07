@@ -5,7 +5,6 @@ import { TestimonialDialog } from "@/components/testimonial-dialog"
 import React from "react"
 import { Text, View } from "react-native"
 
-// Wrapper to keep modal within screen for FeedbackDialog using only className for styling
 function SafeFeedbackDialog(props: React.ComponentProps<typeof FeedbackDialog>) {
     return (
         <View

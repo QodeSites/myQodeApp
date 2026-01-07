@@ -1,16 +1,22 @@
 import { Button } from "@/components/ui/button";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import * as FileSystem from "expo-file-system/legacy";
+import * as MediaLibrary from "expo-media-library";
+import * as Sharing from "expo-sharing";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    Alert,
-    Dimensions,
-    Image,
-    Linking,
-    Modal,
-    Platform,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Image,
+  Linking,
+  Modal,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import Pdf from "react-native-pdf";
 
 type PdfDialogProps = {
   title: string;
@@ -20,23 +26,25 @@ type PdfDialogProps = {
 };
 
 function normalizeUrl(url: string): string {
-  if (url.startsWith('http://') || url.startsWith('https://')) {
+  if (!url) return "";
+  if (/^https?:\/\//.test(url)) {
     return url;
   }
-
-  if (url.startsWith('/')) {
-    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
-      return `${window.location.origin}${url}`;
-    }
+  // React Native PDF requires absolute URLs or file:// protocol for local files.
+  if (url.startsWith("file://")) {
     return url;
   }
-
-  return `/${url}`;
+  if (url.startsWith("/")) {
+    // Attempt to use localhost for emulator/dev environment:
+    return `https://127.0.0.1${url}`;
+  }
+  return url;
 }
+
 function openLink(url: string) {
   const normalizedUrl = normalizeUrl(url);
   Linking.openURL(normalizedUrl).catch((error) => {
-    console.error('Failed to open URL:', error);
+    console.error("Failed to open URL:", error);
     Alert.alert(
       "Failed to open PDF",
       `Could not open: ${normalizedUrl}\n\nPlease check if the file exists or try opening it directly.`,
@@ -45,69 +53,111 @@ function openLink(url: string) {
   });
 }
 
-function downloadLink(url: string) {
-  const normalizedUrl = normalizeUrl(url);
-  Linking.openURL(normalizedUrl).catch((error) => {
-    console.error('Failed to download file:', error);
+async function downloadFileWithPicker(url: string) {
+  try {
+    const normalizedUrl = normalizeUrl(url);
+    const fileName = normalizedUrl.split("/").pop()?.split("?")[0] || "file.pdf";
+    const fileUri = FileSystem.documentDirectory + fileName;
+
+    Alert.alert("Downloading", "Please wait while the file is being downloaded...");
+
+    const downloadResumable = FileSystem.createDownloadResumable(
+      normalizedUrl,
+      fileUri
+    );
+
+    const result = await downloadResumable.downloadAsync();
+    
+    if (!result) {
+      throw new Error("Download failed");
+    }
+
+    const { uri } = result;
+
+    const isSharingAvailable = await Sharing.isAvailableAsync();
+
+    if (isSharingAvailable) {
+      await Sharing.shareAsync(uri, {
+        mimeType: url.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/*',
+        dialogTitle: 'Save File',
+        UTI: url.toLowerCase().endsWith('.pdf') ? 'com.adobe.pdf' : 'public.image',
+      });
+    } else {
+      if (Platform.OS === "android" || Platform.OS === "ios") {
+        const { status } = await MediaLibrary.requestPermissionsAsync();
+        
+        if (status === "granted") {
+          const asset = await MediaLibrary.createAssetAsync(uri);
+          await MediaLibrary.createAlbumAsync("Downloads", asset, false);
+          Alert.alert(
+            "Download Complete",
+            "File has been saved to your Downloads folder.",
+            [{ text: "OK" }]
+          );
+        } else {
+          Alert.alert(
+            "Download Complete",
+            `File saved to: ${uri}\n\nPlease grant storage permission to save to Downloads folder.`,
+            [{ text: "OK" }]
+          );
+        }
+      } else {
+        Alert.alert(
+          "Download Complete",
+          `File saved to: ${uri}`,
+          [{ text: "OK" }]
+        );
+      }
+    }
+  } catch (error) {
+    console.error("Failed to download file:", error);
     Alert.alert(
-      "Failed to download file",
-      `Could not download: ${normalizedUrl}`,
+      "Download Failed",
+      `Could not download the file. Please try again or open it in your browser.`,
       [{ text: "OK" }]
     );
-  });
+  }
 }
 
 export function PdfDialog({ title, trigger, pdfSrc, imageSrc }: PdfDialogProps) {
-  const [visible, setVisible] = React.useState(false);
-  const [pdfError, setPdfError] = React.useState(false);
-  const [pdfLoading, setPdfLoading] = React.useState(true);
-  const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [visible, setVisible] = useState(false);
+  const [pdfError, setPdfError] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(true);
+  const [numberOfPages, setNumberOfPages] = useState<number | null>(null);
+
+  const pdfRef = useRef<any>(null);
 
   const handleOpen = useCallback(() => {
     setVisible(true);
     setPdfError(false);
     setPdfLoading(true);
+    setNumberOfPages(null);
   }, []);
 
   const handleClose = useCallback(() => {
     setVisible(false);
     setPdfError(false);
     setPdfLoading(true);
-    if (loadTimeoutRef.current) {
-      clearTimeout(loadTimeoutRef.current);
-      loadTimeoutRef.current = null;
-    }
+    setNumberOfPages(null);
   }, []);
 
   const normalizedPdfUrl = useMemo(() => {
-    return pdfSrc ? normalizeUrl(pdfSrc) : null;
+    if (!pdfSrc) return null;
+    if (pdfSrc.startsWith("http://") || pdfSrc.startsWith("https://")) {
+      return pdfSrc;
+    }
+    return normalizeUrl(pdfSrc);
   }, [pdfSrc]);
 
-  // Reset loading state when URL changes or modal opens
   useEffect(() => {
     if (visible && normalizedPdfUrl) {
       setPdfLoading(true);
       setPdfError(false);
-
-      if (loadTimeoutRef.current) {
-        clearTimeout(loadTimeoutRef.current);
-        loadTimeoutRef.current = null;
-      }
-
-      // Previews use timeout in case PDF viewer fails
-      loadTimeoutRef.current = setTimeout(() => {
-        setPdfLoading(false);
-      }, 5000);
-
-      return () => {
-        if (loadTimeoutRef.current) {
-          clearTimeout(loadTimeoutRef.current);
-          loadTimeoutRef.current = null;
-        }
-      };
+      setNumberOfPages(null);
     } else if (!visible) {
       setPdfLoading(true);
       setPdfError(false);
+      setNumberOfPages(null);
     }
   }, [visible, normalizedPdfUrl]);
 
@@ -119,13 +169,12 @@ export function PdfDialog({ title, trigger, pdfSrc, imageSrc }: PdfDialogProps) 
 
   const handleDownload = useCallback(() => {
     if (pdfSrc) {
-      downloadLink(pdfSrc);
+      downloadFileWithPicker(pdfSrc);
     } else if (imageSrc) {
-      downloadLink(imageSrc);
+      downloadFileWithPicker(imageSrc);
     }
   }, [pdfSrc, imageSrc]);
 
-  // Clone the trigger element and merge onPress handlers
   const triggerWithHandler = useMemo(() => {
     if (!React.isValidElement(trigger)) return trigger;
     return React.cloneElement(
@@ -144,94 +193,88 @@ export function PdfDialog({ title, trigger, pdfSrc, imageSrc }: PdfDialogProps) 
     );
   }, [trigger, handleOpen]);
 
-  const modalHeight = useMemo(() => Dimensions.get("window").height * 0.7, []);
-
-  // Detect if on web for showing preview
-  const isWeb =
-    Platform.OS === "web" || (typeof window !== "undefined" && !!window.document);
-
-  // File type check (simple)
-  const isPdfDocument =
-    (pdfSrc && (pdfSrc.toLowerCase().endsWith(".pdf") || pdfSrc.startsWith("http"))) ||
-    (imageSrc && /\.(jpg|jpeg|png|webp|gif)$/i.test(imageSrc));
+  const screenDimensions = Dimensions.get("window");
+  const modalHeight = screenDimensions.height * 0.85;
+  const modalWidth = screenDimensions.width * 0.95;
 
   const renderPdfContent = () => {
-    // Only show preview on web for PDFs hosted externally
     if (!pdfSrc) return null;
 
-    if (isWeb && normalizedPdfUrl && pdfSrc.toLowerCase().endsWith('.pdf')) {
-      // Try to embed PDF via iframe or via Google Docs Viewer if external
-      let iframeSrc = normalizedPdfUrl;
-      // If it's not same-origin, wrap with Google Docs Viewer to prevent CORS issues
-      try {
-        const loc =
-          typeof window !== "undefined" && window.location
-            ? window.location.origin
-            : "";
-        const isSameOrigin =
-          loc && normalizedPdfUrl.startsWith(loc);
-
-        if (!isSameOrigin && normalizedPdfUrl.startsWith("http")) {
-          // Google Docs Viewer for public PDF links
-          iframeSrc =
-            `https://docs.google.com/gview?url=${encodeURIComponent(
-              normalizedPdfUrl
-            )}&embedded=true`;
-        }
-      } catch (e) {}
-
+    if (
+      normalizedPdfUrl &&
+      pdfSrc.toLowerCase().endsWith(".pdf")
+    ) {
       return (
-        <View style={{ width: "100%", height: "100%", position: "relative" }}>
-          {pdfError ? (
-            <View className="h-full w-full items-center justify-center p-4">
-              <Text className="text-sm text-center text-muted-foreground mb-4">
-                Failed to load PDF preview
-              </Text>
-              <Button onPress={handleOpenLink} variant="default" size="sm">
-                Open PDF in new tab
-              </Button>
+        <View className="flex-1 w-full h-full relative">
+          {pdfLoading && (
+            <View className="absolute inset-0 flex items-center justify-center bg-white z-10">
+              <ActivityIndicator size="large" color="#3b82f6" />
+              <Text className="text-base text-gray-700 mt-4 font-medium">Loading PDF...</Text>
+              <Text className="text-sm text-gray-500 mt-2">Please wait, this may take a moment</Text>
             </View>
-          ) : (
-            <>
-              {pdfLoading && (
-                <View className="absolute inset-0 items-center justify-center bg-white/80 z-10">
-                  <Text className="text-sm text-muted-foreground">
-                    Loading PDF...
-                  </Text>
+          )}
+          {pdfError && (
+            <View className="absolute inset-0 flex items-center justify-center bg-white z-20 p-6">
+              <View className="bg-red-50 rounded-lg p-6 max-w-md">
+                <Text className="text-lg font-semibold text-red-900 mb-2 text-center">
+                  Preview Unavailable
+                </Text>
+                <Text className="text-sm text-red-700 mb-6 text-center leading-5">
+                  Unable to load PDF preview. You can open it in your browser or download it to view.
+                </Text>
+                <View className="flex flex-row gap-3 justify-center">
+                  <Button onPress={handleOpenLink} variant="default" size="sm" className="flex-1">
+                    <Text className="text-white font-medium">Open in Browser</Text>
+                  </Button>
+                  <Button onPress={handleDownload} variant="outline" size="sm" className="flex-1">
+                    <Text className="font-medium">Download</Text>
+                  </Button>
                 </View>
-              )}
-              {/* @ts-ignore - iframe is available in React Native Web */}
-              <iframe
-                src={iframeSrc}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  border: "none",
-                  display: pdfLoading ? "none" : "block",
-                  background: "#fff",
-                }}
-                title={title}
-                onLoad={() => setPdfLoading(false)}
-                onError={() => {
-                  setPdfError(true);
-                  setPdfLoading(false);
-                }}
-              />
-            </>
+              </View>
+            </View>
+          )}
+          {!pdfError && (
+            <Pdf
+              ref={pdfRef}
+              source={{ uri: normalizedPdfUrl }}
+              style={{ flex: 1, width: "100%", height: "100%" }}
+              onLoadComplete={(numberOfPages: number) => {
+                setPdfLoading(false);
+                setPdfError(false);
+                setNumberOfPages(numberOfPages);
+              }}
+              onError={(error: any) => {
+                console.error("PDF error:", error);
+                setPdfLoading(false);
+                setPdfError(true);
+              }}
+              onLoadProgress={() => {
+                setPdfLoading(true);
+              }}
+              trustAllCerts={Platform.OS === "android"} // helps with self-signed
+              enablePaging={false}
+              activityIndicator={
+                <ActivityIndicator size="large" color="#3b82f6" />
+              }
+            />
           )}
         </View>
       );
     }
 
-    // For mobile (React Native), or if not a PDF, show fallback
     return (
-      <View className="h-full w-full items-center justify-center p-4">
-        <Text className="text-sm text-center text-muted-foreground mb-4">
-          PDF preview is not supported in this environment.
-        </Text>
-        <Button onPress={handleOpenLink} variant="default" size="sm">
-          Open PDF in new tab
-        </Button>
+      <View className="h-full w-full flex items-center justify-center p-6">
+        <View className="bg-gray-50 rounded-lg p-6 max-w-md">
+          <Text className="text-base font-medium text-gray-900 mb-3 text-center">
+            Preview Not Supported
+          </Text>
+          <Text className="text-sm text-gray-600 mb-6 text-center leading-5">
+            PDF preview is not available in this environment. Please open the file in your browser.
+          </Text>
+          <Button onPress={handleOpenLink} variant="default" size="sm" className="w-full">
+            <Text className="text-white font-medium">Open PDF in Browser</Text>
+          </Button>
+        </View>
       </View>
     );
   };
@@ -242,79 +285,108 @@ export function PdfDialog({ title, trigger, pdfSrc, imageSrc }: PdfDialogProps) 
       <Modal
         transparent
         visible={visible}
-        animationType="fade"
+        animationType="slide"
         onRequestClose={handleClose}
+        statusBarTranslucent
       >
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={handleClose}
-          className="flex-1 items-center justify-center bg-black/50"
-        >
+        <View className="flex-1 bg-black/60">
           <TouchableOpacity
             activeOpacity={1}
-            onPress={(e) => e.stopPropagation()}
-            className="bg-white rounded-md w-[96vw] max-w-4xl p-6"
+            onPress={handleClose}
+            className="flex-1 items-center justify-center p-4"
           >
-            {/* Header */}
-            <View className="mb-4">
-              <Text className="font-bold text-lg">{title}</Text>
-            </View>
-
-            {/* Content */}
-            <View
-              className="flex items-center justify-center rounded border bg-white w-full mb-4 overflow-hidden"
-              style={{ height: modalHeight }}
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+              className="bg-white rounded-xl shadow-2xl overflow-hidden"
+              style={{ width: modalWidth, maxWidth: 1200, height: modalHeight }}
             >
-              {pdfSrc ? (
-                renderPdfContent()
-              ) : imageSrc ? (
-                <Image
-                  source={{ uri: imageSrc }}
-                  className="w-full h-full"
-                  resizeMode="contain"
-                  accessibilityLabel={`${title} preview`}
-                />
-              ) : (
-                <View className="h-full w-full items-center justify-center">
-                  <Text className="text-sm text-center text-muted-foreground">
-                    No preview available
+              {/* Header */}
+              <View className="flex flex-row items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <View className="flex-1 mr-4">
+                  <Text className="text-xl font-bold text-gray-900" numberOfLines={1}>
+                    {title}
+                  </Text>
+                  <Text className="text-xs text-gray-500 mt-1">
+                    {pdfSrc ? 'PDF Document' : imageSrc ? 'Image' : 'Preview'}
                   </Text>
                 </View>
-              )}
-            </View>
+                <TouchableOpacity
+                  onPress={handleClose}
+                  className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center active:bg-gray-300"
+                  activeOpacity={0.7}
+                >
+                  <Text className="text-gray-600 text-xl font-bold">✕</Text>
+                </TouchableOpacity>
+              </View>
 
-            {/* Actions */}
-            <View className="flex flex-row justify-end gap-2 mt-2">
-              {pdfSrc && (
+              {/* Content */}
+              <View className="flex-1 bg-gray-100">
+                {pdfSrc ? (
+                  renderPdfContent()
+                ) : imageSrc ? (
+                  <ScrollView 
+                    className="flex-1"
+                    maximumZoomScale={3}
+                    minimumZoomScale={1}
+                    contentContainerStyle={{ padding: 16 }}
+                  >
+                    <Image
+                      source={{ uri: imageSrc }}
+                      className="w-full h-full rounded-lg"
+                      resizeMode="contain"
+                      accessibilityLabel={`${title} preview`}
+                    />
+                  </ScrollView>
+                ) : (
+                  <View className="flex-1 items-center justify-center p-6">
+                    <View className="bg-white rounded-lg p-8 shadow-sm">
+                      <Text className="text-base font-medium text-gray-900 text-center mb-2">
+                        No Preview Available
+                      </Text>
+                      <Text className="text-sm text-gray-600 text-center">
+                        The content cannot be displayed
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              {/* Footer Actions */}
+              <View className="flex flex-row items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-white">
+                {(pdfSrc || imageSrc) && (
+                  <>
+                    <Button
+                      onPress={handleDownload}
+                      variant="default"
+                      size="sm"
+                      className="flex-row items-center gap-2"
+                    >
+                      <Text className="text-white font-semibold">⬇ Download</Text>
+                    </Button>
+                    {pdfSrc && (
+                      <Button
+                        onPress={handleOpenLink}
+                        variant="outline"
+                        size="sm"
+                        className="flex-row items-center gap-2"
+                      >
+                        <Text className="font-semibold">↗ Open in Browser</Text>
+                      </Button>
+                    )}
+                  </>
+                )}
                 <Button
-                  onPress={handleOpenLink}
-                  variant="default"
-                  size="sm"
-                  className="mr-2"
-                >
-                  Open in new tab
-                </Button>
-              )}
-              {(pdfSrc || imageSrc) && (
-                <Button
-                  onPress={handleDownload}
-                  variant="default"
+                  onPress={handleClose}
+                  variant="outline"
                   size="sm"
                 >
-                  Download
+                  <Text className="font-semibold">Close</Text>
                 </Button>
-              )}
-              <Button
-                onPress={handleClose}
-                variant="outline"
-                size="sm"
-                className="ml-2"
-              >
-                Close
-              </Button>
-            </View>
+              </View>
+            </TouchableOpacity>
           </TouchableOpacity>
-        </TouchableOpacity>
+        </View>
       </Modal>
     </View>
   );

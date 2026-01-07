@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Dimensions, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Dimensions, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { api } from "@/api/axios";
+import Textarea from "@/components/text-area";
 import { useClient } from "@/context/ClientContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -112,27 +113,7 @@ function RadioGroupItem({ selected }: RadioGroupItemProps) {
   );
 }
 
-type TextareaProps = {
-  value: string;
-  onChangeText: (text: string) => void;
-  placeholder?: string;
-  className?: string;
-  editable?: boolean;
-};
-function Textarea({ value, onChangeText, placeholder, className, editable = true }: TextareaProps) {
-  return (
-    <TextInput
-      className={className}
-      value={value}
-      onChangeText={onChangeText}
-      placeholder={placeholder}
-      editable={editable}
-      multiline
-      numberOfLines={4}
-      textAlignVertical="top"
-    />
-  );
-}
+
 
 type FeedbackDialogProps = {
   triggerLabel?: string;
