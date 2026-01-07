@@ -47,7 +47,6 @@ async function injectToken(config: any) {
 api.interceptors.request.use(injectToken);
 pyapi.interceptors.request.use(injectToken);
 
-// --- Token Refresh Logic (shared for both api and pyapi) --- //
 async function handleAuthError(error: any, originApi: typeof api | typeof pyapi) {
   try {
     const original = error.config;
@@ -61,6 +60,7 @@ async function handleAuthError(error: any, originApi: typeof api | typeof pyapi)
         await tokenStorage.clear();
         return Promise.reject(error);
       }
+      console.log(refreshToken,"======================refreshToken")
 
       if (refreshing) {
         // Wait for refresh to complete and retry
@@ -116,7 +116,6 @@ async function handleAuthError(error: any, originApi: typeof api | typeof pyapi)
   }
 }
 
-// Interceptors to handle 401 for token refresh on BOTH api and pyapi
 api.interceptors.response.use(
   response => response,
   error => handleAuthError(error, api)
