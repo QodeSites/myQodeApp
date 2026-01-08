@@ -58,6 +58,21 @@ const sanitizeName = (name: string | null | undefined) => {
   return name.trim();
 };
 
+const statusDisplayText = (value: string) => {
+  // Add any special label mappings here if desired.
+  switch (value) {
+      case "All Statuses":
+          return "All Statuses";
+      case "Active":
+          return "Active";
+      case "Pending KYC":
+          return "Pending KYC";
+      case "Dormant":
+          return "Dormant";
+      default:
+          return value;
+  }
+};
 /* =========================
    Skeleton Component
    ========================= */
@@ -85,7 +100,7 @@ export default function FamilyPortfolioSection() {
   const [familyAccounts, setFamilyAccounts] = useState<FamAccWithPortfolio[]>([]);
   const [portfolioLoading, setPortfolioLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"All" | "Active" | "Pending KYC" | "Dormant">("All");
+  const [statusFilter, setStatusFilter] = useState<"All Statuses" | "Active" | "Pending KYC" | "Dormant">("All Statuses");
 
   // Collapse states
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
@@ -160,7 +175,7 @@ export default function FamilyPortfolioSection() {
         sanitizeName(acc.groupname)?.toLowerCase().includes(q) ||
         sanitizeName(acc.ownername)?.toLowerCase().includes(q) ||
         false;
-      const matchesStatus = statusFilter === "All" || acc.status === statusFilter;
+      const matchesStatus = statusFilter === "All Statuses" || acc.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
   }, [familyAccounts, searchTerm, statusFilter]);
@@ -298,16 +313,32 @@ export default function FamilyPortfolioSection() {
               className="max-w-xs input px-3 py-2 rounded-lg border border-primary text-base flex-1"
               placeholderTextColor="#888"
             />
-            <Select value={statusFilter} className="border p-2 rounded-lg border-primary" onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Statuses</SelectItem>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Pending KYC">Pending KYC</SelectItem>
-                <SelectItem value="Dormant">Dormant</SelectItem>
-              </SelectContent>
+            <Select
+                value={statusFilter}
+                onValueChange={v => setStatusFilter(v as typeof statusFilter)}
+                className="h-10 w-40"
+                placeholder="All Statuses"
+            >
+                <SelectTrigger className="w-40 mb-0 h-10 border rounded-lg p-2">
+                    <SelectValue
+                        placeholder="All Statuses"
+                        formatValue={v => statusDisplayText(v)}
+                    />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem key="All Statuses" value="All Statuses">
+                        All Statuses
+                    </SelectItem>
+                    <SelectItem key="Active" value="Active">
+                        Active
+                    </SelectItem>
+                    <SelectItem key="Pending KYC" value="Pending KYC">
+                        Pending KYC
+                    </SelectItem>
+                    <SelectItem key="Dormant" value="Dormant">
+                        Dormant
+                    </SelectItem>
+                </SelectContent>
             </Select>
           </View>
         </View>
@@ -324,7 +355,7 @@ export default function FamilyPortfolioSection() {
         </View>
 
         {sortedGroupEntries.length === 0 ? (
-          <View className="bg-card rounded-xl flex flex-col items-center justify-center py-8">
+          <View className="bg-card rounded-xl flex flex-col items-center justify-center py-8 border border-primary">
             <TrendingUp size={16} className="h-12 w-12 text-muted-foreground mb-4" />
             <Text className="text-sm text-muted-foreground text-center">No portfolio data found.</Text>
           </View>

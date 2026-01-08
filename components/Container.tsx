@@ -11,7 +11,7 @@ export const Container = ({ children, className = '' }: React.PropsWithChildren<
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ flexGrow: 1, paddingBottom: 32 }}
       keyboardShouldPersistTaps="handled"
-      className={`w-full bg-card p-4 rounded-lg ${className}`}
+      className={`w-content bg-card p-4 rounded-lg ${className}`}
     >
       {children}
     </ScrollView>
