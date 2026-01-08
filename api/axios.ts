@@ -53,6 +53,7 @@ async function handleAuthError(error: any, originApi: typeof api | typeof pyapi)
     if (!original || original._retry) {
       return Promise.reject(error);
     }
+    console.log(error.response,"=======================error")
 
     if (error.response?.status === 401) {
       const refreshToken = await tokenStorage.getRefresh();

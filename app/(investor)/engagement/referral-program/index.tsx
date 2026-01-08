@@ -354,7 +354,6 @@ export default function ReferAnInvestorPage() {
                     className="w-full px-3 py-3 border border-border rounded-md bg-background text-foreground text-base"
                     placeholder="Enter full name..."
                     autoCapitalize="words"
-                    required
                   />
                 </View>
 
@@ -370,7 +369,6 @@ export default function ReferAnInvestorPage() {
                     placeholder="Enter email address..."
                     keyboardType="email-address"
                     autoCapitalize="none"
-                    required
                   />
                 </View>
 
@@ -385,7 +383,6 @@ export default function ReferAnInvestorPage() {
                     className="w-full px-3 py-3 border border-border rounded-md bg-background text-foreground text-base"
                     placeholder="Enter phone number..."
                     keyboardType="phone-pad"
-                    required
                   />
                 </View>
 
