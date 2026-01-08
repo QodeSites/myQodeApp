@@ -1,9 +1,12 @@
+import React, { useState } from "react";
+import { Text, View } from "react-native";
+
 import { api } from "@/api/axios";
+import ModalComponent from "@/components/modal";
+import Textarea from "@/components/text-area";
+import { Button } from "@/components/ui/button";
 import { useClient } from "@/context/ClientContext";
 import { useToast } from "@/hooks/use-toast";
-
-import React, { useRef, useState } from "react";
-import { ActivityIndicator, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 type Props = {
   triggerLabel?: string;
@@ -26,17 +29,11 @@ async function sendEmail(emailData: {
 }) {
   try {
     const response = await api.post("/api/send-email", emailData);
-    let contentType: string | undefined = undefined;
-    if (response.headers) {
-      if (typeof response.headers.get === "function") {
-        const headerVal = response.headers.get("content-type");
-        if (typeof headerVal === "string") {
-          contentType = headerVal;
-        }
-      } else if (typeof response.headers["content-type"] === "string") {
-        contentType = response.headers["content-type"];
-      }
-    }
+    const contentType =
+      response.headers &&
+      (typeof response.headers.get === "function"
+        ? response.headers.get("content-type")
+        : response.headers["content-type"]);
     if (response.status < 200 || response.status >= 300) {
       const errorBody = response.data;
       console.error("API response not OK:", {
@@ -46,10 +43,13 @@ async function sendEmail(emailData: {
       });
       throw new Error(`Failed to send email: ${response.status} ${response.statusText}`);
     }
-    if (contentType && contentType.includes("application/json")) {
-      const data = response.data;
-      console.log("API response data:", data);
-      return data;
+    if (
+      contentType &&
+      typeof contentType === "string" &&
+      contentType.includes("application/json")
+    ) {
+      console.log("API response data:", response.data);
+      return response.data;
     } else {
       console.warn("API response is not JSON:", response.data);
       return { success: true };
@@ -60,6 +60,20 @@ async function sendEmail(emailData: {
   }
 }
 
+type LabelProps = {
+  children: React.ReactNode;
+  htmlFor?: string;
+  className?: string;
+  style?: any;
+};
+function Label({ children, style, className }: LabelProps) {
+  return (
+    <Text className={`text-[14px] text-[#37584F] font-semibold mb-0 ${className || ""}`} style={style}>
+      {children}
+    </Text>
+  );
+}
+
 export function TestimonialDialog({
   triggerLabel = "Open Testimonial Form",
 }: Props) {
@@ -67,11 +81,14 @@ export function TestimonialDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
   const { toast } = useToast();
-  const { selectedClientCode, selectedClientId, clients, loading, selectedEmailClient } = useClient();
+  const { selectedClientCode, selectedClientId, selectedEmailClient } = useClient();
   const [story, setStory] = useState("");
-  const formRef = useRef<any>(null);
 
-  const onSubmit = async () => {
+  const resetForm = () => {
+    setStory("");
+  };
+
+  async function onSubmit() {
     const formData = {
       story: story.trim(),
       nuvamaCode: selectedClientCode,
@@ -152,7 +169,7 @@ export function TestimonialDialog({
           title: "Thank you!",
           description: "Your testimonial has been received.",
         });
-        setStory("");
+        resetForm();
         setTimeout(() => {
           setSubmitStatus("idle");
           setOpen(false);
@@ -170,96 +187,95 @@ export function TestimonialDialog({
       .finally(() => {
         setIsSubmitting(false);
       });
-  };
+  }
 
   return (
     <>
-      <TouchableOpacity
+      <Button
         onPress={() => setOpen(true)}
         className="bg-primary text-white border border-gray-300 p-2.5 rounded h-content"
         style={{ alignSelf: "flex-start" }}
       >
-        <Text
-          className="bg-primary text-white font-sans"
-          numberOfLines={1}
-        >
-          {triggerLabel}
-        </Text>
-      </TouchableOpacity>
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <View className="flex-1 justify-center items-center bg-black/60 max-w-xl">
-          <View className="w-11/12 max-w-xl bg-card rounded-lg p-5">
-            <View>
-              <Text className="text-lg font-sans mb-4">
-                Share Your Qode Experience
+        <Text className="text-white">{triggerLabel}</Text>
+      </Button>
+      <ModalComponent
+        isOpen={open}
+        onClose={() => {
+          resetForm();
+          setSubmitStatus("idle");
+          setOpen(false);
+        }}
+        title="Share Your Qode Experience"
+        contentClassName="bg-card rounded-lg max-w-md w-full"
+        headerClassName="flex flex-row items-center justify-between p-4 border-b border-border"
+        bodyClassName="p-2"
+      >
+        <View className="p-1">
+          <View className="mb-3">
+            <Label>
+              Your testimonial story
+            </Label>
+            <Textarea
+              value={story}
+              onChangeText={setStory}
+              placeholder="Tell us about your journey with Qode..."
+              className="w-full min-h-[120px] border border-[#E0E0E0] rounded-[7px] p-2.5 mt-1.5 text-[15px] bg-[#fcfcf7] text-top"
+              editable={!isSubmitting}
+              textAlignVertical="top"
+            />
+          </View>
+          {submitStatus === "success" && (
+            <View className="bg-[#e6fde8] rounded-[7px] border border-[#52b660] p-2.5 my-2">
+              <Text className="text-[#176b3d] text-[14px]">
+                Your testimonial has been sent successfully! Thank you for your input.
               </Text>
             </View>
-            <ScrollView>
-              <View className="mb-2">
-                <View className="grid gap-2 mb-2.5">
-                  <Text className="label font-sans mb-1">
-                    Your testimonial story
-                  </Text>
-                  <TextInput
-                    ref={formRef}
-                    className="textarea min-h-[140px] border border-gray-300 rounded-lg p-2 text-top"
-                    multiline
-                    value={story}
-                    onChangeText={setStory}
-                    placeholder="Tell us about your journey with Qode..."
-                    placeholderTextColor="#888"
-                    editable={!isSubmitting}
-                    textAlignVertical="top"
-                  />
-                </View>
-                {submitStatus === "success" && (
-                  <View className="p-3 bg-green-100 border border-green-400 rounded text-green-700 text-sm mb-2">
-                    <Text className="text-green-700 text-sm">
-                      Your testimonial has been sent successfully! Thank you for your input.
-                    </Text>
-                  </View>
-                )}
-                {submitStatus === "error" && (
-                  <View className="p-3 bg-red-100 border border-red-400 rounded text-red-700 text-sm mb-2">
-                    <Text className="text-red-700 text-sm">
-                      Failed to send testimonial. Please try again or contact us directly.
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </ScrollView>
-            <View className="flex flex-row justify-end gap-3 pt-4">
-              <TouchableOpacity
-                className="border bg-card text-black rounded border-gray-300 py-2 px-4 min-w-[80px] items-center mr-2"
-                disabled={isSubmitting}
-                onPress={() => {
-                  setStory("");
-                  setSubmitStatus("idle");
-                  setOpen(false);
-                }}
-              >
-                <Text className="text-black">Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className={`bg-primary text-white hover:opacity-90 rounded py-2 px-4 items-center min-w-[120px] ${isSubmitting ? "opacity-60" : ""}`}
-                disabled={isSubmitting}
-                onPress={onSubmit}
-              >
-                {isSubmitting ? (
-                  <View className="flex flex-row items-center">
-                    <ActivityIndicator color="#fff" size="small" />
-                    <Text className="text-white ml-2">
-                      Submitting...
-                    </Text>
-                  </View>
-                ) : (
-                  <Text className="text-white">Submit Testimonial</Text>
-                )}
-              </TouchableOpacity>
+          )}
+          {submitStatus === "error" && (
+            <View className="bg-[#fdeded] rounded-[7px] border border-[#ff7575] p-2.5 my-2">
+              <Text className="text-[#be3939] text-[14px]">
+                Failed to send testimonial. Please try again or contact us directly.
+              </Text>
             </View>
-          </View>
+          )}
         </View>
-      </Modal>
+        <View className="flex-row justify-end items-center pt-2 px-3 gap-x-4">
+          <Button
+            onPress={() => {
+              resetForm();
+              setSubmitStatus("idle");
+              setOpen(false);
+            }}
+            disabled={isSubmitting}
+            className="min-w-[90px] ml-1 font-bold"
+            style={{
+              borderRadius: 7,
+              paddingVertical: 10,
+              paddingHorizontal: 18,
+              opacity: isSubmitting ? 0.5 : 1,
+            }}
+            variant="secondary"
+            size="md"
+          >
+            Cancel
+          </Button>
+          <Button
+            onPress={onSubmit}
+            disabled={isSubmitting || !story.trim()}
+            className="min-w-[120px] ml-1 text-white font-bold"
+            style={{
+              borderRadius: 7,
+              paddingVertical: 10,
+              paddingHorizontal: 18,
+              opacity: (isSubmitting || !story.trim()) ? 0.5 : 1,
+            }}
+            variant="primary"
+            size="md"
+          >
+            {isSubmitting ? "Submitting..." : "Submit Testimonial"}
+          </Button>
+        </View>
+      </ModalComponent>
     </>
   );
 }

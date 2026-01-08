@@ -7,9 +7,10 @@ type TextareaProps = {
     placeholder?: string;
     className?: string;
     editable?: boolean;
+    numberOfLines? : number;
   };
 
-export default function Textarea({ value, onChangeText, placeholder, className, editable = true }: TextareaProps) {
+export default function Textarea({ value, onChangeText, placeholder, className, editable = true ,numberOfLines = 10}: TextareaProps) {
     return (
         <TextInput
         className={className}
@@ -18,7 +19,7 @@ export default function Textarea({ value, onChangeText, placeholder, className, 
         placeholder={placeholder}
         editable={editable}
         multiline
-        numberOfLines={10}
+        numberOfLines={numberOfLines}
         textAlignVertical="top"
         />
     );

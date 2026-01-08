@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import React from "react";
 import { Text, TouchableOpacity } from "react-native";
 
@@ -7,7 +8,7 @@ type ButtonProps = {
   className?: string;
   style?: object;
   disabled?: boolean;
-  variant?: "default" | "outline" | "ghost" | "destructive" | "link";
+  variant?: "primary"| "secondary" | "default" | "outline" | "ghost" | "destructive" | "link";
   size?: "sm" | "md" | "lg";
 };
 
@@ -15,6 +16,8 @@ const variantClassMap: Record<
   NonNullable<ButtonProps["variant"]>,
   string
 > = {
+  primary : "bg-primary text-white border border-gray-300",
+  secondary: "bg-primary text-accent border border-primary-300",
   default: "bg-primary text-white border border-gray-300",
   outline: "bg-transparent border border-primary text-primary",
   ghost: "bg-transparent border-0 text-primary",
@@ -40,9 +43,13 @@ export function Button({
   variant = "default",
   size = "md",
 }: ButtonProps) {
-  const classes =
-    className ||
-    `${variantClassMap[variant]} ${sizeClassMap[size]} h-content`;
+  // Merge variant, size, and custom className
+  const classes = cn(
+    variantClassMap[variant],
+    sizeClassMap[size],
+    "h-content items-center",
+    className
+  );
 
   // Choose contrasting text color for variants (basic heuristic)
   const textColor =

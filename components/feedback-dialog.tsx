@@ -1,119 +1,75 @@
 import React, { useState } from "react";
-import { Dimensions, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 import { api } from "@/api/axios";
 import Textarea from "@/components/text-area";
+import { Button } from "@/components/ui/button";
 import { useClient } from "@/context/ClientContext";
 import { useToast } from "@/hooks/use-toast";
+import ModalComponent from "./modal";
 
-// Dummy components to replace non-RN UI imports.
-type DialogProps = {
-  open: boolean;
-  children: React.ReactNode;
+// Compact Radio Button
+type RadioButtonProps = {
+  selected: boolean;
+  label: string;
+  onPress: () => void;
 };
-function Dialog({ open, children }: DialogProps) {
-  return <>{children}</>;
-}
-
-type DialogContentProps = {
-  children: React.ReactNode;
-  className?: string;
-};
-function DialogContent({ children, className }: DialogContentProps) {
+function CompactRadioButton({ selected, label, onPress }: RadioButtonProps) {
   return (
-    <View className={className}>
-      {children}
-    </View>
+    <TouchableOpacity
+      onPress={onPress}
+      className="flex-row items-center mr-2 py-0.5 px-1 min-h-[32px]"
+      hitSlop={10}
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+    >
+      <View className={`h-[22px] w-[22px] rounded-full border-2 flex items-center justify-center mr-1.5 bg-white ${selected ? "border-[#02422B] bg-[#e2f2ea]" : "border-[#DABD38]"}`}>
+        {selected && <View className="h-[10px] w-[10px] rounded-full bg-[#02422B]" />}
+      </View>
+      <Text className="text-[16px] text-[#37584F] font-semibold">{label}</Text>
+    </TouchableOpacity>
   );
 }
 
-type DialogHeaderProps = {
-  children: React.ReactNode;
+// Replaces original Button Group with actual radio buttons in a row
+type RadioGroupProps = {
+  value: string;
+  onValueChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  horizontal?: boolean;
+  style?: any;
 };
-function DialogHeader({ children }: DialogHeaderProps) {
-  return <View className="mb-4">{children}</View>;
-}
-
-type DialogTitleProps = {
-  children: React.ReactNode;
-  className?: string;
-};
-function DialogTitle({ children, className }: DialogTitleProps) {
-  return <Text className={className}>{children}</Text>;
-}
-
-type DialogTriggerProps = {
-  asChild?: boolean;
-  children: React.ReactNode;
-};
-function DialogTrigger({ asChild, children }: DialogTriggerProps) {
-  // Should not render anything in React Native. Handled manually.
-  return <>{children}</>;
-}
-
-type DialogFooterProps = {
-  children: React.ReactNode;
-};
-function DialogFooter({ children }: DialogFooterProps) {
-  return <View className="flex flex-row justify-end gap-2 pt-4">{children}</View>;
+function CompactRadioGroup({ value, onValueChange, options, horizontal = true, style }: RadioGroupProps) {
+  return (
+    <View
+      className={horizontal ? "flex-row items-center gap-x-2.5" : ""}
+      style={style}
+    >
+      {options.map((option) => (
+        <CompactRadioButton
+          key={option.value}
+          selected={value === option.value}
+          label={option.label}
+          onPress={() => onValueChange(option.value)}
+        />
+      ))}
+    </View>
+  );
 }
 
 type LabelProps = {
   children: React.ReactNode;
   htmlFor?: string;
   className?: string;
+  style?: any;
 };
-function Label({ children, htmlFor, className }: LabelProps) {
+function Label({ children, style, className }: LabelProps) {
   return (
-    <Text className={className}>{children}</Text>
+    <Text className={`text-[14px] text-[#37584F] font-semibold mb-0 ${className || ""}`} style={style}>
+      {children}
+    </Text>
   );
 }
-
-type RadioOption = {
-  value: string;
-  label: string;
-}
-
-type RadioGroupProps = {
-  value: string;
-  onValueChange: (v: string) => void;
-  options: RadioOption[];
-  className?: string;
-};
-function RadioGroup({ value, onValueChange, options, className }: RadioGroupProps) {
-  return (
-    <View className={className}>
-      {options.map((option) => (
-        <TouchableOpacity
-          key={option.value}
-          className="flex flex-row items-center gap-2 mr-2"
-          onPress={() => onValueChange(option.value)}
-        >
-          <RadioGroupItem selected={value === option.value} />
-          <Label>{option.label}</Label>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-}
-
-type RadioGroupItemProps = {
-  selected: boolean;
-};
-function RadioGroupItem({ selected }: RadioGroupItemProps) {
-  return (
-    <View
-      className="w-5 h-5 rounded-full border border-primary-400 items-center justify-center mr-1"
-      style={{ backgroundColor: selected ? "#DABD38" : "#FFF" }}
-    >
-      {selected && (
-        <View className="w-3 h-3 rounded-full bg-primary" />
-      )}
-    </View>
-  );
-}
-
-
 
 type FeedbackDialogProps = {
   triggerLabel?: string;
@@ -136,17 +92,12 @@ async function sendEmail(emailData: {
 }) {
   try {
     const response = await api.post("/api/send-email", emailData);
-
-    // Axios returns data directly in .data
-    // Axios response always has status, statusText, headers as properties (headers is object)
     const contentType =
       response.headers &&
       (typeof response.headers.get === "function"
         ? response.headers.get("content-type")
         : response.headers["content-type"]);
-
     if (response.status < 200 || response.status >= 300) {
-      // Axios never has .text(), use .data for the body
       const errorBody = response.data;
       console.error("API response not OK:", {
         status: response.status,
@@ -155,8 +106,6 @@ async function sendEmail(emailData: {
       });
       throw new Error(`Failed to send email: ${response.status} ${response.statusText}`);
     }
-
-    // Axios: response.data holds parsed JSON response if appropriate
     if (
       contentType &&
       typeof contentType === "string" &&
@@ -268,9 +217,9 @@ export function FeedbackDialog({
               <p><strong>Ease of key processes (onboarding, top-ups, withdrawals)? (1-5):</strong> ${formData.ease}</p>
               ${formData.improve
                 ? `<p><strong>One thing we could do to improve your experience:</strong> ${formData.improve.replace(
-                    /\n/g,
-                    "<br>"
-                  )}</p>`
+                  /\n/g,
+                  "<br>"
+                )}</p>`
                 : ""}
             </div>
             <p style="margin-top: 20px; font-size: 14px; color: #37584F;">
@@ -327,146 +276,152 @@ export function FeedbackDialog({
       });
   }
 
-  // Radios for all four required questions
+  // Radio rating options 1-5 as dots with numbers
   const npsOptions = [1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: String(n) }));
-
-  const windowDimensions = Dimensions.get("window");
-  const windowHeight = windowDimensions.height;
-  const windowWidth = windowDimensions.width;
-  const maxDialogHeight = Math.floor(windowHeight * 0.85);
-  const maxDialogWidth = Math.min(600, windowWidth - 32); // 600px max or window width minus padding
 
   return (
     <>
-      <TouchableOpacity
+      <Button
         onPress={() => setOpen(true)}
         className="bg-primary text-white border border-gray-300 p-2.5 rounded h-content"
         style={{ alignSelf: "flex-start" }}
       >
         <Text className="text-white">{triggerLabel}</Text>
-      </TouchableOpacity>
-      <Modal
-        visible={open}
-        onRequestClose={() => setOpen(false)}
-        animationType="slide"
-        transparent={true}
+      </Button>
+      <ModalComponent
+        isOpen={open}
+        onClose={() => {
+          resetForm();
+          setSubmitStatus("idle");
+          setOpen(false);
+        }}
+        title="Share Your Feedback"
+        contentClassName="bg-card rounded-lg max-w-md w-full"
+        headerClassName="flex flex-row items-center justify-between p-4 border-b border-border"
+        bodyClassName="p-2"
       >
-        <View className="flex-1 justify-center items-center bg-black bg-opacity-40 p-4">
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-            className="w-full items-center justify-center flex-1"
-            style={{ maxHeight: maxDialogHeight }}
-          >
-            <View
-              className="bg-card rounded-xl p-5"
-              style={{
-                width: maxDialogWidth,
-                maxWidth: maxDialogWidth,
-                maxHeight: maxDialogHeight,
-              }}
-            >
-              <DialogHeader>
-                <DialogTitle className="text-lg font-semibold">Share Your Feedback</DialogTitle>
-              </DialogHeader>
-              <ScrollView
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-                alwaysBounceVertical={false}
-                contentContainerStyle={{ paddingBottom: 10 }}
-                style={{ maxHeight: maxDialogHeight - 150 }}
-                className=""
-              >
-                {/* NPS Question */}
-                <View className="grid gap-2 mb-2">
-                  <Label htmlFor="nps">How likely are you to recommend Qode? (1-5)</Label>
-                  <RadioGroup
-                    value={nps}
-                    onValueChange={setNps}
-                    options={npsOptions}
-                    className="flex gap-4"
-                  />
-                </View>
-                {/* Satisfaction Question */}
-                <View className="grid gap-2 mb-2">
-                  <Label htmlFor="satisfaction">Overall satisfaction with Qode? (1-5)</Label>
-                  <RadioGroup
-                    value={satisfaction}
-                    onValueChange={setSatisfaction}
-                    options={npsOptions}
-                    className="flex gap-4"
-                  />
-                </View>
-                {/* Clarity Question */}
-                <View className="grid gap-2 mb-2">
-                  <Label htmlFor="clarity">Clarity/usefulness of portfolio updates & review calls? (1-5)</Label>
-                  <RadioGroup
-                    value={clarity}
-                    onValueChange={setClarity}
-                    options={npsOptions}
-                    className="flex gap-4"
-                  />
-                </View>
-                {/* Ease Question */}
-                <View className="grid gap-2 mb-2">
-                  <Label htmlFor="ease">Ease of key processes (onboarding, top-ups, withdrawals)? (1-5)</Label>
-                  <RadioGroup
-                    value={ease}
-                    onValueChange={setEase}
-                    options={npsOptions}
-                    className="flex gap-4"
-                  />
-                </View>
-                {/* Suggestion Textarea */}
-                <View className="grid gap-2 mb-2">
-                  <Label htmlFor="improve">One thing we could do to improve your experience</Label>
-                  <Textarea
-                    value={improve}
-                    onChangeText={setImprove}
-                    placeholder="Your suggestions..."
-                    
-                    className="textarea min-h-[140px] border border-gray-300 rounded-lg p-2 text-top"
-                  />
-                </View>
-                {/* Result Message */}
-                {submitStatus === "success" && (
-                  <View className="p-3 bg-green-100 border border-green-400 text-green-700 rounded text-sm my-2">
-                    <Text className="text-green-700">
-                      Your feedback has been sent successfully! Thank you for your input.
-                    </Text>
-                  </View>
-                )}
-                {submitStatus === "error" && (
-                  <View className="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm my-2">
-                    <Text className="text-red-700">
-                      Failed to send feedback. Please try again or contact us directly.
-                    </Text>
-                  </View>
-                )}
-              </ScrollView>
-              <DialogFooter>
-                <TouchableOpacity
-                  className="bg-card border border-primary-300 text-primary-900 px-4 py-2 rounded"
-                  onPress={() => {
-                    resetForm();
-                    setSubmitStatus("idle");
-                    setOpen(false);
-                  }}
-                  disabled={isSubmitting}
-                >
-                  <Text className="text-primary-900">Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className="bg-primary text-white hover:opacity-90 px-4 py-2 rounded"
-                  onPress={onSubmit}
-                  disabled={isSubmitting}
-                >
-                  <Text className="text-white">{isSubmitting ? "Submitting..." : "Submit Feedback"}</Text>
-                </TouchableOpacity>
-              </DialogFooter>
+       
+          <View className="p-1">
+            {/* NPS Question */}
+            <View className="mb-3">
+              <Label>
+                How likely are you to recommend Qode? (1-5)
+              </Label>
+              <CompactRadioGroup
+                value={nps}
+                onValueChange={setNps}
+                options={npsOptions}
+                horizontal
+                style={{ marginTop: 8 }}
+              />
             </View>
-          </KeyboardAvoidingView>
-        </View>
-      </Modal>
+            {/* Satisfaction Question */}
+            <View className="mb-3">
+              <Label>
+                Overall satisfaction with Qode? (1-5)
+              </Label>
+              <CompactRadioGroup
+                value={satisfaction}
+                onValueChange={setSatisfaction}
+                options={npsOptions}
+                horizontal
+                style={{ marginTop: 8 }}
+              />
+            </View>
+            {/* Clarity Question */}
+            <View className="mb-3">
+              <Label>
+                Clarity/usefulness of portfolio updates & review calls? (1-5)
+              </Label>
+              <CompactRadioGroup
+                value={clarity}
+                onValueChange={setClarity}
+                options={npsOptions}
+                horizontal
+                style={{ marginTop: 8 }}
+              />
+            </View>
+            {/* Ease Question */}
+            <View className="mb-3">
+              <Label>
+                Ease of key processes (onboarding, top-ups, withdrawals)? (1-5)
+              </Label>
+              <CompactRadioGroup
+                value={ease}
+                onValueChange={setEase}
+                options={npsOptions}
+                horizontal
+                style={{ marginTop: 8 }}
+              />
+            </View>
+            {/* Suggestion Textarea */}
+            <View className="mb-3">
+              <Label>
+                One thing we could do to improve your experience
+              </Label>
+              <Textarea
+                value={improve}
+                onChangeText={setImprove}
+                placeholder="Your suggestions..."
+                className="w-full min-h-[70px] border border-[#E0E0E0] rounded-[7px] p-2.5 mt-1.5 text-[15px] bg-[#fcfcf7] text-top"
+                editable={!isSubmitting}
+              />
+            </View>
+            {/* Result Message */}
+            {submitStatus === "success" && (
+              <View className="bg-[#e6fde8] rounded-[7px] border border-[#52b660] p-2.5 my-2">
+                <Text className="text-[#176b3d] text-[14px]">
+                  Your feedback has been sent successfully! Thank you for your input.
+                </Text>
+              </View>
+            )}
+            {submitStatus === "error" && (
+              <View className="bg-[#fdeded] rounded-[7px] border border-[#ff7575] p-2.5 my-2">
+                <Text className="text-[#be3939] text-[14px]">
+                  Failed to send feedback. Please try again or contact us directly.
+                </Text>
+              </View>
+            )}
+          </View>
+          {/* Footer Buttons - always visible below scroll for actions */}
+          <View className="flex-row justify-end items-center pt-2 px-3 gap-x-4">
+            <Button
+              onPress={() => {
+                resetForm();
+                setSubmitStatus("idle");
+                setOpen(false);
+              }}
+              disabled={isSubmitting}
+              className="min-w-[90px] ml-1 font-bold"
+              style={{
+                borderRadius: 7,
+                paddingVertical: 10,
+                paddingHorizontal: 18,
+                opacity: isSubmitting ? 0.5 : 1,
+              }}
+              variant="secondary"
+              size="md"
+            >
+              Cancel
+            </Button>
+            <Button
+              onPress={onSubmit}
+              disabled={isSubmitting || !nps || !satisfaction || !clarity || !ease}
+              className="min-w-[90px] ml-1 text-white font-bold"
+              style={{
+                borderRadius: 7,
+                paddingVertical: 10,
+                paddingHorizontal: 18,
+                opacity: (isSubmitting || !nps || !satisfaction || !clarity || !ease) ? 0.5 : 1,
+              }}
+              variant="primary"
+              size="md"
+            >
+              {isSubmitting ? "Submitting..." : "Submit Feedback"}
+            </Button>
+          </View>
+        
+      </ModalComponent>
     </>
   );
 }
