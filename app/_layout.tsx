@@ -22,11 +22,18 @@ function RootLayoutInner() {
 
   const [fontsLoaded, fontError] = useFonts({
     Lato: require("@/assets/fonts/Lato-Regular.ttf"),
-    PlayfairDisplay: require("@/assets/fonts/PlayfairDisplay-Regular.ttf"),
+    "Lato-Bold": require("@/assets/fonts/Lato-Bold.ttf"),
+    "Lato-Light": require("@/assets/fonts/Lato-Light.ttf"),
+    PlayfairDisplay: require("@/assets/fonts/PlayfairDisplay-Variable.ttf"),
   });
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    if (fontsLoaded) {
+      console.log('✅ All fonts loaded successfully');
+      SplashScreen.hideAsync();
+    }
+    if (fontError) {
+      console.error('❌ Font loading error:', fontError);
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);

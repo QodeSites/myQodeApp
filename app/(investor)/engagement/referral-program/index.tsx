@@ -1,5 +1,6 @@
 import { api } from "@/api/axios"
 import { Container } from "@/components/Container"
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import Modal from "@/components/modal"
 import Textarea from "@/components/text-area"
 import { Button } from "@/components/ui/button"
@@ -229,7 +230,8 @@ export default function ReferAnInvestorPage() {
   }
 
   return (
-    <Container className="p-4 rounded-lg bg-card h-fit">
+    <ProtectedRoute requireInvestor>
+      <Container className="p-4 rounded-lg bg-card h-fit">
       <KeyboardAvoidingView
         enabled
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -457,5 +459,6 @@ export default function ReferAnInvestorPage() {
         </View>
       </KeyboardAvoidingView>
     </Container>
+    </ProtectedRoute>
   )
 }

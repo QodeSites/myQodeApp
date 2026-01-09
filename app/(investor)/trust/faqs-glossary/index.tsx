@@ -219,26 +219,26 @@ export default function FAQsGlossaryPage() {
   return (
     <Container className="p-4 rounded-lg bg-card h-fit">
       <View className="flex gap-2">
-        <Text className="flex gap-2 items-center font-serif text-2xl text-foreground">
+        <Text className="flex gap-2 items-center font-serif text-lg text-foreground">
           FAQs &amp; Glossary
         </Text>
-        <Text className="mb-2 text-lg text-muted-foreground">
+        <Text className="mb-2 text-base text-muted-foreground">
           Answers to common questions and definitions of terms used in our updates and reports.
         </Text>
       </View>
-      <View className="flex gap-2">
+      <View className="flex gap-1.5">
         {sections.map((section) => (
           <View key={section.title}>
-            <View className="px-1 md:px-0 mb-2">
+            <View className="px-1 md:px-0 mb-1.5">
               <Text
-                className="text-pretty text-xl font-serif text-foreground flex flex-wrap items-center gap-2"
+                className="text-pretty text-base font-serif text-foreground flex flex-wrap items-center gap-1.5"
                 numberOfLines={2}
                 style={{ flexWrap: 'wrap' }}
               >
                 {section.title}
               </Text>
             </View>
-            <View className="grid gap-4 md:grid-cols-2">
+            <View className="grid gap-3 md:grid-cols-2">
               {section.items.map((item, i) => {
                 const isOpen = openIdx[section.title] === i
                 return (
@@ -251,22 +251,22 @@ export default function FAQsGlossaryPage() {
                       onPress={() => toggle(section.title, i)}
                       accessibilityRole="button"
                       accessibilityState={{ expanded: isOpen }}
-                      className="w-full p-4 flex flex-row items-center justify-between gap-4 text-left"
+                      className="w-full p-3 flex flex-row items-center justify-between gap-3 text-left"
                     >
                       <Text
-                        className={`font-medium text-md leading-snug ${isOpen && "text-[#008455]"}`}
+                        className={`font-medium text-sm leading-snug ${isOpen && "text-[#008455]"}`}
                         style={{ flexShrink: 1 }}
                       >
                         {item.q}
                       </Text>
-                      <View className="rounded-full border size-6 p-4 justify-center items-center text-emerald-700 border-primary-200" style={{ alignItems: "center", justifyContent: "center" }}>
-                        {isOpen ? <X className="size-4" /> : <Plus className="size-4" />}
+                      <View className="rounded-full border size-5 p-3 justify-center items-center text-emerald-700 border-primary-200" style={{ alignItems: "center", justifyContent: "center" }}>
+                        {isOpen ? <X className="size-3" /> : <Plus className="size-3" />}
                       </View>
                     </TouchableOpacity>
                     <Collapse open={isOpen}>
-                      <View className="px-4 pb-4 -mt-1">
+                      <View className="px-3 pb-3 -mt-0.5">
                         {typeof item.a === "string"
-                          ? <Text className="text-sm text-muted-foreground">{item.a}</Text>
+                          ? <Text className="text-xs text-muted-foreground">{item.a}</Text>
                           : item.a}
                       </View>
                     </Collapse>
@@ -278,14 +278,14 @@ export default function FAQsGlossaryPage() {
         ))}
 
         <View>
-          <View className="px-1 md:px-0 mb-3">
-            <Text className="font-semibold text-2xl">Glossary</Text>
+          <View className="px-1 md:px-0 mb-2">
+            <Text className="font-semibold text-lg">Glossary</Text>
           </View>
-          <View className="grid gap-4 md:grid-cols-2">
+          <View className="grid gap-3 md:grid-cols-2">
             {glossary.map((g) => (
-              <View key={g.term} className="rounded-xl border bg-card p-4">
-                <Text className="font-medium">{g.term}</Text>
-                <Text className="mt-1 text-sm text-muted-foreground">{g.def}</Text>
+              <View key={g.term} className="rounded-xl border bg-card p-3">
+                <Text className="font-medium text-sm">{g.term}</Text>
+                <Text className="mt-0.5 text-xs text-muted-foreground">{g.def}</Text>
               </View>
             ))}
           </View>

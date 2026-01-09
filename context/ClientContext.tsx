@@ -38,6 +38,8 @@ interface ClientContextType {
   selectedClientType: string;
   selectedEmailClient: string;
   isHeadOfFamily: boolean;
+  isInvestor: boolean;
+  isNonInvestor: boolean;
   loading: boolean;
   unauthorized: boolean;
   setSelectedClient: (clientCode: string) => Promise<void>;
@@ -111,6 +113,8 @@ export function ClientProvider({ children }: { children: ReactNode }) {
   const [selectedClientName, setSelectedClientName] = useState("");
   const [selectedClientHolderName, setSelectedClientHolderName] = useState("");
   const [isHeadOfFamily, setIsHeadOfFamily] = useState(false);
+  const [isInvestor, setIsInvestor] = useState(false);
+  const [isNonInvestor, setIsNonInvestor] = useState(false);
   const [loading, setLoading] = useState(true);
   const [unauthorized, setUnauthorized] = useState(false);
 
@@ -131,6 +135,8 @@ export function ClientProvider({ children }: { children: ReactNode }) {
     setSelectedClientName("");
     setSelectedClientHolderName("");
     setIsHeadOfFamily(false);
+    setIsInvestor(false);
+    setIsNonInvestor(false);
     setLoading(false);
     setUnauthorized(false);
     await clearClientStorage();
@@ -215,6 +221,11 @@ export function ClientProvider({ children }: { children: ReactNode }) {
 
       setClients(availableClients);
 
+      // Determine user type
+      const hasClients = availableClients.length > 0;
+      setIsInvestor(hasClients);
+      setIsNonInvestor(!hasClients);
+
       if (!availableClients.length) {
         await clearSelectedClient();
         return;
@@ -277,6 +288,8 @@ export function ClientProvider({ children }: { children: ReactNode }) {
     selectedClientType,
     selectedEmailClient,
     isHeadOfFamily,
+    isInvestor,
+    isNonInvestor,
     loading,
     unauthorized,
     setSelectedClient,

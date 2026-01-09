@@ -1,5 +1,6 @@
 
 import { Container } from "@/components/Container"
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { FeedbackDialog } from "@/components/feedback-dialog"
 import { TestimonialDialog } from "@/components/testimonial-dialog"
 import React from "react"
@@ -17,16 +18,17 @@ function SafeFeedbackDialog(props: React.ComponentProps<typeof FeedbackDialog>) 
 
 export default function FeedbackPage() {
     return (
-        <Container className="p-4 rounded-lg bg-card h-fit ">
+        <ProtectedRoute requireInvestor>
+            <Container className="p-4 rounded-lg bg-card h-fit ">
             {/* Top section: Feedback */}
-            <View className="flex flex-col gap-2">
-                <Text className="text-xl font-serif">Why Your Feedback Matters</Text>
-                <Text>
+            <View className="flex flex-col gap-1.5">
+                <Text className="text-lg font-serif">Why Your Feedback Matters</Text>
+                <Text className="text-xs">
                     Every portfolio at Qode is built with discipline, but the way we serve you is shaped by listening. Your
-                    input tells us what we’re doing right, what we can refine, and how we can make your experience smoother.
+                    input tells us what we're doing right, what we can refine, and how we can make your experience smoother.
                 </Text>
-                <Text>
-                    Whether it’s the clarity of our reports, the ease of a top-up, or the value of review calls, your
+                <Text className="text-xs">
+                    Whether it's the clarity of our reports, the ease of a top-up, or the value of review calls, your
                     perspective helps us get better—step by step.
                 </Text>
                 <View className="">
@@ -48,21 +50,21 @@ export default function FeedbackPage() {
             */}
 
             {/* Divider */}
-            <View className="h-px bg-border my-2" />
+            <View className="h-px bg-border my-1.5" />
 
             {/* Testimonials section */}
-            <View className="flex flex-col gap-2">
-                <Text className="text-xl font-serif">Why Your Experience Matters</Text>
-                <Text>
+            <View className="flex flex-col gap-1.5">
+                <Text className="text-lg font-serif">Why Your Experience Matters</Text>
+                <Text className="text-xs">
                     Numbers tell part of the story. The other part is how you feel as an investor—your confidence, your peace of
                     mind, and your trust in our process. When you share your journey with Qode, it not only guides us but also
                     inspires future investors to invest with conviction.
                 </Text>
-                <Text>
-                    If you’ve had a positive journey with Qode, we’d love to hear your story. Testimonials may highlight: your
-                    onboarding experience, clarity of communication, and confidence in Qode’s investment philosophy.
+                <Text className="text-xs">
+                    If you've had a positive journey with Qode, we'd love to hear your story. Testimonials may highlight: your
+                    onboarding experience, clarity of communication, and confidence in Qode's investment philosophy.
                 </Text>
-                <Text>
+                <Text className="text-xs">
                     With your consent, selected testimonials may be anonymized and featured in our website, decks, and newsletters
                     to inspire other investors.
                 </Text>
@@ -71,5 +73,6 @@ export default function FeedbackPage() {
                 </View>
             </View>
         </Container>
+        </ProtectedRoute>
     )
 }

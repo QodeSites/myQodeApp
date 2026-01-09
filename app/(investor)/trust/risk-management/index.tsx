@@ -130,10 +130,10 @@ export default function Page() {
   return (
     <Container>
       <View className="flex gap-2">
-        <Text className="flex gap-2 items-center font-serif text-2xl text-foreground">
+        <Text className="flex gap-2 items-center font-serif text-lg text-foreground">
           Policies
         </Text>
-        <Text className="mb-2 text-lg text-muted-foreground">
+        <Text className="mb-2 text-base text-muted-foreground">
           Key operating policies that guide portfolio construction and risk management.
         </Text>
       </View>
@@ -152,13 +152,13 @@ export default function Page() {
                 idx !== policies.length - 1 ? "border-b border-border" : ""
               }
             >
-              <View className="p-4">
-                <View className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
+              <View className="p-3">
+                <View className="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
                   <View className="max-w-3xl">
-                    <Text className="text-pretty text-xl font-bold text-foreground flex items-center gap-2">
+                    <Text className="text-pretty text-base font-bold text-foreground flex items-center gap-1.5">
                       {p.title}
                     </Text>
-                    <Text className="mt-1 text-sm text-muted-foreground">
+                    <Text className="mt-0.5 text-xs text-muted-foreground">
                       {p.description}
                     </Text>
                   </View>

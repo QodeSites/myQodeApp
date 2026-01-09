@@ -34,14 +34,16 @@ interface NavLinkProps {
   url: string;
   onClick?: () => void;
   icon?: ReactNode;
+  disabled?: boolean;
 }
 
-const NavLink = ({ children, url, onClick, icon }: NavLinkProps) => {
+const NavLink = ({ children, url, onClick, icon, disabled }: NavLinkProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const fullPathname = pathname.startsWith("/(investor)") ? pathname : `/(investor)${pathname}`;
 
   const handlePress = () => {
+    if (disabled) return; // Prevent navigation if disabled
     router.push(url as any);
     onClick && onClick();
   };
@@ -50,16 +52,18 @@ const NavLink = ({ children, url, onClick, icon }: NavLinkProps) => {
     <Pressable
       onPress={handlePress}
       hitSlop={10}
+      disabled={disabled}
       className={[
         "p-2 flex flex-row items-center gap-2 rounded-lg",
         fullPathname === url ? "bg-background" : "",
+        disabled ? "opacity-40" : "",
       ].join(" ")}
     >
       {icon && (
         <View
           className="mr-2"
           style={{
-            opacity: fullPathname === url ? 1 : 0.7,
+            opacity: disabled ? 0.4 : (fullPathname === url ? 1 : 0.7),
           }}
         >
           {React.isValidElement(icon)
@@ -67,7 +71,7 @@ const NavLink = ({ children, url, onClick, icon }: NavLinkProps) => {
                 icon as React.ReactElement<any>,
                 {
                   ...(icon.props || {}),
-                  color: fullPathname === url ? "#1e293b" : "#efecd3"
+                  color: disabled ? "#9CA3AF" : (fullPathname === url ? "#1e293b" : "#efecd3")
                 }
               )
             : icon}
@@ -76,7 +80,7 @@ const NavLink = ({ children, url, onClick, icon }: NavLinkProps) => {
       <Text
         className={[
           "text-base",
-          fullPathname === url ? "text-primary" : "text-secondary"
+          disabled ? "text-gray-400" : (fullPathname === url ? "text-primary" : "text-secondary")
         ].join(" ")}
       >
         {children}
@@ -93,9 +97,15 @@ const MobileAccountDropdown = () => {
     setSelectedClient,
     selectedClientHolderName,
     selectedClientType,
+    isNonInvestor,
   } = useClient();
 
   const [open, setOpen] = useState(false);
+
+  // Don't render for non-investors
+  if (isNonInvestor || clients.length === 0) {
+    return null;
+  }
 
   const displayName = selectedClientHolderName || "Account";
   const roleDisplay = isHeadOfFamily ? "Head of Family" : "Owner";
@@ -256,9 +266,25 @@ interface SidebarContentMobileProps {
 }
 
 const SidebarContentMobile = ({ onClose }: SidebarContentMobileProps) => {
-
+  const { isNonInvestor } = useClient();
   const pathname = usePathname();
-  
+
+  // Define investor-only routes
+  const investorOnlyRoutes = [
+    '/(investor)/portfolio/performance',
+    '/(investor)/portfolio/snapshot',
+    '/(investor)/experience/account-services',
+    '/(investor)/experience/account-mapping',
+    '/(investor)/engagement/your-voice-matters',
+    '/(investor)/engagement/referral-program',
+    '/(investor)/trust/vault',
+    '/(investor)/trust/grievance-redressal',
+  ];
+
+  const isRouteDisabled = (url: string) => {
+    return isNonInvestor && investorOnlyRoutes.includes(url);
+  };
+
   const getInitialAccordion = () => {
     if (pathname.includes('/portfolio')) return ['portfolio'];
     if (pathname.includes('/about')) return ['about'];
@@ -290,10 +316,10 @@ const SidebarContentMobile = ({ onClose }: SidebarContentMobileProps) => {
           </View>
         </AccordionTrigger>
         <AccordionContent className="ml-4">
-          <NavLink url="/(investor)/portfolio/performance" onClick={onClose} icon={<BarChart3 size={16} />}>
+          <NavLink url="/(investor)/portfolio/performance" onClick={onClose} icon={<BarChart3 size={16} />} disabled={isRouteDisabled('/(investor)/portfolio/performance')}>
             <Text>Performance</Text>
           </NavLink>
-          <NavLink url="/(investor)/portfolio/snapshot" onClick={onClose} icon={<BookOpen size={16} />}>
+          <NavLink url="/(investor)/portfolio/snapshot" onClick={onClose} icon={<BookOpen size={16} />} disabled={isRouteDisabled('/(investor)/portfolio/snapshot')}>
             <Text>Snapshot</Text>
           </NavLink>
         </AccordionContent>
@@ -333,10 +359,10 @@ const SidebarContentMobile = ({ onClose }: SidebarContentMobileProps) => {
           <NavLink url="/(investor)/experience/portal-guide" onClick={onClose} icon={<BookOpen size={16} />}>
             <Text>Investor Portal Guide</Text>
           </NavLink>
-          <NavLink url="/(investor)/experience/account-services" onClick={onClose} icon={<Settings size={16} />}>
+          <NavLink url="/(investor)/experience/account-services" onClick={onClose} icon={<Settings size={16} />} disabled={isRouteDisabled('/(investor)/experience/account-services')}>
             <Text>Account Services</Text>
           </NavLink>
-          <NavLink url="/(investor)/experience/account-mapping" onClick={onClose} icon={<Users size={16} />}>
+          <NavLink url="/(investor)/experience/account-mapping" onClick={onClose} icon={<Users size={16} />} disabled={isRouteDisabled('/(investor)/experience/account-mapping')}>
             <Text>Account Mapping</Text>
           </NavLink>
           <NavLink url="/(investor)/experience/service-cadence" onClick={onClose} icon={<Users size={16} />}>
@@ -354,10 +380,10 @@ const SidebarContentMobile = ({ onClose }: SidebarContentMobileProps) => {
           </View>
         </AccordionTrigger>
         <AccordionContent className="ml-4">
-          <NavLink url="/(investor)/engagement/your-voice-matters" onClick={onClose} icon={<MessageSquare size={16} />}>
+          <NavLink url="/(investor)/engagement/your-voice-matters" onClick={onClose} icon={<MessageSquare size={16} />} disabled={isRouteDisabled('/(investor)/engagement/your-voice-matters')}>
             <Text>Your Voice Matters</Text>
           </NavLink>
-          <NavLink url="/(investor)/engagement/referral-program" onClick={onClose} icon={<Gift size={16} />}>
+          <NavLink url="/(investor)/engagement/referral-program" onClick={onClose} icon={<Gift size={16} />} disabled={isRouteDisabled('/(investor)/engagement/referral-program')}>
             <Text>Referral Program</Text>
           </NavLink>
           <NavLink url="/(investor)/engagement/insights-and-events" onClick={onClose} icon={<Calendar size={16} />}>
@@ -375,7 +401,7 @@ const SidebarContentMobile = ({ onClose }: SidebarContentMobileProps) => {
         </AccordionTrigger>
         <AccordionContent className="ml-4">
           <NavLink url="/(investor)/trust/vault" onClick={onClose}
-                  icon={<FileKey size={16} />}>
+                  icon={<FileKey size={16} />} disabled={isRouteDisabled('/(investor)/trust/vault')}>
             <Text>Client Document Vault</Text>
           </NavLink>
           <NavLink url="/(investor)/trust/risk-management" onClick={onClose}
@@ -383,7 +409,7 @@ const SidebarContentMobile = ({ onClose }: SidebarContentMobileProps) => {
             <Text>Risk Management</Text>
           </NavLink>
           <NavLink url="/(investor)/trust/grievance-redressal" onClick={onClose}
-                  icon={<AlertTriangle size={16} />}>
+                  icon={<AlertTriangle size={16} />} disabled={isRouteDisabled('/(investor)/trust/grievance-redressal')}>
             <Text>Grievance Redressal</Text>
           </NavLink>
           <NavLink url="/(investor)/trust/faqs-glossary" onClick={onClose} icon={<HelpCircle size={16} />}>

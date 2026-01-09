@@ -17,6 +17,8 @@ import {
 // Use Expo Router for navigation instead of @react-navigation/native
 import { useClient } from '@/context/ClientContext';
 import { useRouter } from 'expo-router';
+import { useGoogleAuth } from '@/hooks/useGoogleAuth';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 
 type LoginStep = 'username' | 'password' | 'otp-verification' | 'password-setup' | 'dev-bypass';
 console.log(process.env.EXPO_PUBLIC_APP_ENV,process.env.EXPO_PUBLIC_APP_ENV === 'development')
@@ -45,6 +47,9 @@ export default function LoginScreen() {
   const [fpSending, setFpSending] = useState(false);
   const [fpMsg, setFpMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const {refresh} = useClient()
+
+  // Google Sign-In hook
+  const { signInWithGoogle, loading: googleLoading, error: googleError, disabled: googleDisabled } = useGoogleAuth();
 
   const passwordStrength = {
     length: newPassword.length >= 8,
@@ -432,6 +437,31 @@ export default function LoginScreen() {
                       }
                     </TouchableOpacity>
                   </>
+                )}
+
+                {/* Divider */}
+                {!requirePasswordSetup && (
+                  <View className="flex-row items-center my-2">
+                    <View className="flex-1 h-px bg-border" />
+                    <Text className="mx-4 text-sm text-muted-foreground">or</Text>
+                    <View className="flex-1 h-px bg-border" />
+                  </View>
+                )}
+
+                {/* Google Sign-In Button */}
+                {!requirePasswordSetup && (
+                  <GoogleSignInButton
+                    onPress={signInWithGoogle}
+                    loading={googleLoading}
+                    disabled={googleDisabled || isLoading}
+                  />
+                )}
+
+                {/* Google Sign-In Error */}
+                {googleError && !requirePasswordSetup && (
+                  <View className="bg-red-50 border border-red-200 px-4 py-3 rounded-lg">
+                    <Text className="text-red-700 text-sm text-center font-medium">{googleError}</Text>
+                  </View>
                 )}
 
                 {/* Dev Mode Bypass Button */}

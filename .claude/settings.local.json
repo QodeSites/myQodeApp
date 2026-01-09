@@ -7,7 +7,17 @@
       "Bash(ls:*)",
       "Bash(curl:*)",
       "Bash(taskkill:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(npx tsc:*)",
+      "Bash(find:*)",
+      "Bash(file:*)",
+      "Bash(tree:*)",
+      "Bash(dir:*)",
+      "Bash(npm install:*)",
+      "Bash(tail:*)",
+      "Bash(head:*)",
+      "Bash(\"c:\\\\Users\\\\tech\\\\Qode\\\\Desktop\\\\development\\\\myQodeApp\\\\myQodeApp\\\\app\\\\\\(auth\\)\\\\login.tsx.backup\")",
+      "Bash(git checkout:*)"
     ]
   }
 }

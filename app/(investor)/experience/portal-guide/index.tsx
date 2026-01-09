@@ -2,7 +2,7 @@
 
 import { api } from "@/api/axios";
 import { Container } from "@/components/Container";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
     ActivityIndicator,
     Image,
@@ -31,15 +31,6 @@ type ReportGroup = {
   id: number;
   type_of_report: string;
   report_name: ReportItem[];
-};
-
-type FlatRow = {
-  sr: number;
-  type: string;
-  name: string;
-  snapshot: string;
-  tutorial: string;
-  used_for: string;
 };
 
 type VideoFile = {
@@ -152,39 +143,6 @@ const reports_available: ReportGroup[] = [
     ],
   },
 ];
-
-function getFlatRows(
-  data: ReportGroup[],
-  videoFiles: VideoFile[],
-  snapshotData: SnapshotData
-): FlatRow[] {
-  const rows: FlatRow[] = [];
-  let sr = 1;
-  data.forEach((group) => {
-    group.report_name.forEach((rn) => {
-      let videoFile = videoFiles.find(
-        (file) => {
-          const fileNameWithoutExt = file.name.toLowerCase().replace(/\.mp4$/, "");
-          return fileNameWithoutExt === rn.name.toLowerCase();
-        }
-      );
-      if (!videoFile && rn.name === "Statement of Capital Gain/Loss") {
-        videoFile = videoFiles.find(
-          (file) => file.name.replace(/\.mp4$/, "").toLowerCase() === "statement of capital gain loss"
-        );
-      }
-      rows.push({
-        sr: sr++,
-        type: group.type_of_report,
-        name: rn.name,
-        snapshot: rn.snapshot,
-        tutorial: videoFile?.url || "",
-        used_for: rn.used_for ?? "",
-      });
-    });
-  });
-  return rows;
-}
 
 function useVideoTutorials() {
   const [videoFiles, setVideoFiles] = React.useState<VideoFile[]>([]);
@@ -313,7 +271,7 @@ function ViewLink({
   return (
     <TouchableOpacity
       disabled={!hasImages || isLoading}
-      className={`h-9 rounded-md border px-3 justify-center items-center ${hasImages
+      className={`h-7 rounded-md border px-2 justify-center items-center ${hasImages
         ? "border-primary-300 bg-primary"
         : "border-dashed border-primary-300 bg-primary-100"
         }`}
@@ -322,9 +280,9 @@ function ViewLink({
       }}
     >
       {isLoading ? (
-        <Text className="text-primary-600 text-xs">Loading...</Text>
+        <Text className="text-primary-600 text-[10px]">Loading...</Text>
       ) : (
-        <Text className={`text-xs font-semibold ${hasImages ? "text-white" : "text-primary-600"}`}>
+        <Text className={`text-[10px] font-semibold ${hasImages ? "text-white" : "text-primary-600"}`}>
           {hasImages ? "View" : "—"}
         </Text>
       )}
@@ -349,7 +307,7 @@ function VideoLink({
   return (
     <TouchableOpacity
       disabled={!isLink || isLoading}
-      className={`h-9 rounded-md border px-3 justify-center items-center ${isLink
+      className={`h-7 rounded-md border px-2 justify-center items-center ${isLink
         ? "border-primary-300 bg-primary"
         : "border-dashed border-primary-300 bg-primary-100"
         }`}
@@ -358,9 +316,9 @@ function VideoLink({
       }}
     >
       {isLoading ? (
-        <Text className="text-primary-600 text-xs">Loading...</Text>
+        <Text className="text-primary-600 text-[10px]">Loading...</Text>
       ) : (
-        <Text className={`text-xs font-semibold ${isLink ? "text-white" : "text-primary-600"}`}>
+        <Text className={`text-[10px] font-semibold ${isLink ? "text-white" : "text-primary-600"}`}>
           {isLink ? "Watch" : "—"}
         </Text>
       )}
@@ -375,11 +333,6 @@ function VideoLink({
 export default function Page() {
   const { videoFiles, loading: videoLoading, error: videoError } = useVideoTutorials();
   const { snapshotData, loading: snapshotLoading, error: snapshotError } = useSnapshotData();
-
-  const rows = useMemo(
-    () => getFlatRows(reports_available, videoFiles, snapshotData),
-    [videoFiles, snapshotData]
-  );
 
   const [videoModalState, setVideoModalState] = useState<{
     isOpen: boolean;
@@ -443,50 +396,50 @@ export default function Page() {
       />
 
       {/* Banner */}
-      <View className="bg-primary py-3 px-4 rounded-lg mb-6">
-        <Text className="text-sm font-semibold text-white text-center">
+      <View className="bg-primary py-2 px-3 rounded-lg mb-4">
+        <Text className="text-xs font-semibold text-white text-center">
           Access all your portfolio details anytime on our secure reporting portal.
         </Text>
       </View>
 
       {/* Intro Section */}
-      <View className="mb-8">
-        <Text className="text-sm leading-6 text-primary-700 text-center mb-5 px-2">
+      <View className="mb-6">
+        <Text className="text-xs leading-5 text-primary-700 text-center mb-4 px-2">
           At Qode, transparency is central to our philosophy. That's why we provide 24x7 access to your portfolio
           through <Text className="font-semibold">WealthSpectrum</Text>, our secure reporting partner. From
           performance snapshots to tax packs, everything you need is organized in one place.
         </Text>
 
-        <View className="items-center mb-5 w-full" style={{ minHeight: 140 }}>
+        <View className="items-center mb-4 w-full" style={{ minHeight: 120 }}>
           <Image
             source={require('@/assets/images/nuvama-dashboard.png')}
-            style={{ width: 320, height: 140 }}
+            style={{ width: 280, height: 120 }}
             className="rounded-xl border border-primary-200"
             resizeMode="cover"
           />
         </View>
 
-        <View className="items-center mb-4">
+        <View className="items-center mb-3">
           <TouchableOpacity
             onPress={() =>
               Linking.openURL(
                 "https://eclientreporting.nuvamaassetservices.com/wealthspectrum/app/"
               )
             }
-            className="min-w-[192px] px-4 py-3 bg-primary rounded-md border border-primary-700"
+            className="min-w-[160px] px-3 py-2 bg-primary rounded-md border border-primary-700"
           >
-            <Text className="text-base font-semibold text-white text-center">
+            <Text className="text-sm font-semibold text-white text-center">
               WealthSpectrum Portal
             </Text>
           </TouchableOpacity>
         </View>
 
-        <Text className="text-sm italic text-center text-primary-600 mb-4 px-4">
+        <Text className="text-xs italic text-center text-primary-600 mb-3 px-3">
           [Your WealthSpectrum login can be either your Account ID or your registered Email ID.]
         </Text>
 
-        <View className="items-center pt-2">
-          <Text className="text-xs text-primary-600 text-center mb-3">
+        <View className="items-center pt-1.5">
+          <Text className="text-[10px] text-primary-600 text-center mb-2">
             Need help setting up your password on the WealthSpectrum portal?
           </Text>
           <TouchableOpacity
@@ -495,9 +448,9 @@ export default function Page() {
                 "https://myqode.qodeinvest.com/tutorial-document/How%20to%20Generate%20Your%20Password%20on%20Wealth%20Spectrum.pdf"
               )
             }
-            className="px-4 py-2 bg-primary-100 rounded-md border border-primary-300"
+            className="px-3 py-1.5 bg-primary-100 rounded-md border border-primary-300"
           >
-            <Text className="text-sm text-primary-900">
+            <Text className="text-xs text-primary-900">
               View Password Setup Guide (PDF)
             </Text>
           </TouchableOpacity>
@@ -505,9 +458,9 @@ export default function Page() {
       </View>
 
       {/* What You Can Access Section */}
-      <View className="mb-8">
-        <View className="bg-primary px-4 py-2 rounded-md mb-3">
-          <Text className="text-sm font-bold text-white text-center tracking-wide">
+      <View className="mb-6">
+        <View className="bg-primary px-3 py-1.5 rounded-md mb-2">
+          <Text className="text-xs font-bold text-white text-center tracking-wide">
             What You Can Access
           </Text>
         </View>
@@ -541,12 +494,12 @@ export default function Page() {
           ].map((row, idx, arr) => (
             <View
               key={row.feature}
-              className={`px-4 py-3 ${idx < arr.length - 1 ? "border-b border-primary-200" : ""}`}
+              className={`px-3 py-2 ${idx < arr.length - 1 ? "border-b border-primary-200" : ""}`}
             >
-              <Text className="font-semibold text-primary-900 mb-1 text-sm">
+              <Text className="font-semibold text-primary-900 mb-0.5 text-xs">
                 {row.feature}
               </Text>
-              <Text className="text-xs text-primary-600 leading-5">
+              <Text className="text-[10px] text-primary-600 leading-4">
                 {row.desc}
               </Text>
             </View>
@@ -556,15 +509,15 @@ export default function Page() {
 
       {/* Reports Available Section */}
       <View>
-        <View className="bg-primary px-4 py-2 rounded-md mb-4">
-          <Text className="text-sm font-bold text-white text-center tracking-wide">
+        <View className="bg-primary px-3 py-1.5 rounded-md mb-3">
+          <Text className="text-xs font-bold text-white text-center tracking-wide">
             Reports Available
           </Text>
         </View>
 
         {(videoError || snapshotError) && (
-          <View className="rounded-md border border-red-200 bg-red-50 p-3 mb-3">
-            <Text className="text-xs text-red-700 text-center">
+          <View className="rounded-md border border-red-200 bg-red-50 p-2 mb-2">
+            <Text className="text-[10px] text-red-700 text-center">
               {videoError && "Unable to load video tutorials. "}
               {snapshotError && "Unable to load report snapshots. "}
               Some content may not be available.
@@ -573,92 +526,75 @@ export default function Page() {
         )}
 
         {(videoLoading || snapshotLoading) && (
-          <ActivityIndicator size="small" color="#2563eb" style={{ marginVertical: 12 }} />
+          <ActivityIndicator size="small" color="#2563eb" style={{ marginVertical: 8 }} />
         )}
 
-        {/* Table Rows */}
-        <View className="border border-primary-200 rounded-lg overflow-hidden">
-          {/* Table Header (non-mobile) */}
-          <View className="hidden md:flex flex-row bg-primary-100 px-3 py-2 border-b border-primary-300 rounded-t-lg">
-            <View className="w-12 flex-shrink-0">
-              <Text className="text-xs font-semibold text-primary-900">Sr.</Text>
-            </View>
-            <View className="flex-1 min-w-[140px] px-2">
-              <Text className="text-xs font-semibold text-primary-900">Type of Report</Text>
-            </View>
-            <View className="flex-1 min-w-[180px] px-2">
-              <Text className="text-xs font-semibold text-primary-900">Report Name</Text>
-            </View>
-            <View className="w-24 flex-shrink-0">
-              <Text className="text-xs font-semibold text-primary-900">Snapshot</Text>
-            </View>
-            <View className="w-24 flex-shrink-0">
-              <Text className="text-xs font-semibold text-primary-900">Tutorial</Text>
-            </View>
-          </View>
-          {rows.map((r, idx) => {
-            const snapshots = snapshotData[r.name] || [];
-            return (
-              <View
-                key={r.sr + "-" + r.name}
-                className={`
-                  flex-col md:flex-row md:items-center p-4 border-b border-primary-100 
-                  bg-white md:bg-transparent
-                  md:gap-0
-                `}
-                style={{ gap: 12 }}
-              >
-                {/* Responsive: Card style for mobile, table row for md+ */}
-                {/* On md+, align as columns */}
-                <View className="flex-col md:flex-row md:items-center font-sans mb-3 md:mb-0 md:w-full md:gap-1 gap-2">
-                  {/* Sr. */}
-                  <View className="flex flex-row justify-between md:w-12 md:flex-shrink-0 md:justify-center mr-3 md:mr-0">
-                    <Text className="text-xs font-sans font-medium text-primary-400 md:hidden mb-1">Sr.</Text>
-                    <Text className="text-xs font-sans font-bold text-primary md:text-center">{r.sr}</Text>
-                  </View>
-                  {/* Type */}
-                  <View className="flex flex-row justify-between md:flex-1 md:min-w-[140px] md:px-2">
-                    <Text className="text-xs font-medium font-sans text-primary-400 md:hidden mb-1">Type</Text>
-                    <Text className="text-sm font-semibold font-sans text-primary-800 md:text-left">{r.type}</Text>
-                  </View>
-                  {/* Name */}
-                  <View className="flex flex-col justify-between md:flex-1 md:min-w-[180px] md:px-2">
-                    <Text className="text-xs font-medium font-sans text-primary-400 md:hidden mb-1">Name</Text>
-                    <Text className="text-sm font-semibold font-sans text-primary-800 md:text-left">{r.name}</Text>
-                    {!!r.used_for && (
-                      <Text className="text-[11px] text-primary-600">
-                        <Text className="text-primary-500 font-sans">Used for:</Text> <Text className="font-medium">{r.used_for}</Text>
-                      </Text>
-                    )}
-                  </View>
-                  {/* Snapshot */}
-                  <View className="flex flex-row justify-between items-center md:w-24 md:flex-shrink-0 md:justify-center">
-                    <Text className="text-xs font-medium text-primary-400 font-sans md:hidden mb-1">SnapShot</Text>
-                    <View className="w-24 md:w-full">
-                        <ViewLink
-                          images={snapshots}
-                          title={r.name}
-                          onClick={handleSnapshotClick}
-                          isLoading={snapshotLoading}
-                        />
-                    </View>
-                  </View>
-                  {/* Tutorial */}
-                  <View className="flex flex-row justify-between items-center md:w-24 md:flex-shrink-0 md:justify-center">
-                    <Text className="text-xs font-medium text-primary-400 font-sans md:hidden mb-1">Tutorial</Text>
-                    <View className="w-24 md:w-full">
-                      <VideoLink
-                        href={r.tutorial}
-                        title={r.name}
-                        onClick={handleVideoClick}
-                        isLoading={videoLoading}
-                      />
-                    </View>
-                  </View>
-                </View>
+        {/* Reports List - Grouped by Category */}
+        <View className="flex flex-col gap-3">
+          {reports_available.map((group) => (
+            <View key={group.id} className="border border-primary-200 rounded-lg overflow-hidden bg-white mb-3">
+              {/* Category Header */}
+              <View className="bg-primary-50 px-3 py-2 border-b border-primary-200">
+                <Text className="text-xs font-bold text-primary-900">
+                  {group.type_of_report}
+                </Text>
               </View>
-            );
-          })}
+
+              {/* Reports in this category */}
+              <View>
+                {group.report_name.map((report, idx) => {
+                  const snapshots = snapshotData[report.name] || [];
+                  const videoFile = videoFiles.find(
+                    (file) => {
+                      const fileNameWithoutExt = file.name.toLowerCase().replace(/\.mp4$/, "");
+                      return fileNameWithoutExt === report.name.toLowerCase();
+                    }
+                  ) || (report.name === "Statement of Capital Gain/Loss"
+                    ? videoFiles.find((file) => file.name.replace(/\.mp4$/, "").toLowerCase() === "statement of capital gain loss")
+                    : undefined);
+
+                  return (
+                    <View
+                      key={report.name}
+                      className={`p-3 ${idx < group.report_name.length - 1 ? "border-b border-primary-100" : ""}`}
+                    >
+                      {/* Report Name */}
+                      <View className="mb-2">
+                        <Text className="text-xs font-semibold text-primary-900 mb-0.5">
+                          {report.name}
+                        </Text>
+                        {report.used_for && (
+                          <Text className="text-[10px] text-primary-600 italic">
+                            Used for: {report.used_for}
+                          </Text>
+                        )}
+                      </View>
+
+                      {/* Action Buttons */}
+                      <View className="flex flex-row gap-2">
+                        <View className="flex-1">
+                          <ViewLink
+                            images={snapshots}
+                            title={report.name}
+                            onClick={handleSnapshotClick}
+                            isLoading={snapshotLoading}
+                          />
+                        </View>
+                        <View className="flex-1">
+                          <VideoLink
+                            href={videoFile?.url || ""}
+                            title={report.name}
+                            onClick={handleVideoClick}
+                            isLoading={videoLoading}
+                          />
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          ))}
         </View>
       </View>
     </Container>

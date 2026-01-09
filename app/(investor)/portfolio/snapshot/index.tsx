@@ -1,5 +1,6 @@
 import { api } from "@/api/axios";
 import { Container } from "@/components/Container";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useClient } from "@/context/ClientContext";
 import { Calendar, ChevronDown, ChevronRight, Crown, Hash, Mail, TrendingUp, User } from "lucide-react-native";
@@ -77,14 +78,14 @@ const statusDisplayText = (value: string) => {
    Skeleton Component
    ========================= */
 const FamilyPortfolioSkeleton = () => (
-  <View className="space-y-4">
-    <View className="animate-pulse bg-card rounded-xl p-6">
-      <View className="bg-border mb-4 rounded h-6 w-48" />
-      <View className="pl-6 space-y-3">
-        <View className="bg-border h-5 w-40 rounded" />
-        <View className="pl-6">
-          <View className="bg-border h-4 w-32 rounded" />
-          <View className="bg-border h-8 w-24 mt-2 rounded" />
+  <View className="space-y-2">
+    <View className="animate-pulse bg-card rounded-xl p-3">
+      <View className="bg-border mb-2 rounded h-4 w-48" />
+      <View className="pl-3 space-y-1.5">
+        <View className="bg-border h-3 w-40 rounded" />
+        <View className="pl-3">
+          <View className="bg-border h-2.5 w-32 rounded" />
+          <View className="bg-border h-5 w-24 mt-1 rounded" />
         </View>
       </View>
     </View>
@@ -286,22 +287,24 @@ export default function FamilyPortfolioSection() {
   }
 
   return (
-    <Container className="p-4 w-full flex rounded-lg bg-card">
-      <View className="flex gap-2">
-        <View className="flex gap-3">
-          <View className="flex flex-row justify-between items-center gap-3">
-            <Text className="text-xl font-serif text-foreground">
+    <ProtectedRoute requireInvestor>
+      <Container className="p-4 w-full flex rounded-lg bg-card">
+      <View className="flex gap-3">
+        {/* Header Section */}
+        <View className="flex gap-2">
+          <View className="flex flex-row items-center justify-between">
+            <Text className="text-base font-serif text-foreground">
               {isHeadOfFamily ? "Family Portfolio Values" : "My Portfolio Values"}
             </Text>
             {isHeadOfFamily ? (
-              <View className="bg-blue-50 text-blue-700 border-blue-200 px-2 py-1 rounded-full flex-row items-center border">
-                <Crown size={12}  className="w-2 h-2 mr-1" />
-                <Text className="text-sm font-sans text-blue-700">Head of Family</Text>
+              <View className="bg-blue-50 border-blue-200 px-2 py-1 rounded-md flex-row items-center border">
+                <Crown size={12} className="text-blue-600 mr-1" />
+                <Text className="text-xs font-medium text-blue-700">Head of Family</Text>
               </View>
             ) : (
-              <View className="bg-gray-50 text-gray-700 border-gray-200 px-2 py-1 rounded-full flex-row items-center border">
-                <User size={12} className="w-2 h-2 mr-1" />
-                <Text className="text-sm font-sans text-gray-700">Owner Portfolio</Text>
+              <View className="bg-gray-50 border-gray-200 px-2 py-1 rounded-md flex-row items-center border">
+                <User size={12} className="text-gray-600 mr-1" />
+                <Text className="text-xs font-medium text-gray-700">Owner Portfolio</Text>
               </View>
             )}
           </View>
@@ -366,19 +369,19 @@ export default function FamilyPortfolioSection() {
               const totalAccounts = Object.values(group.owners).reduce((sum, owner) => sum + owner.accounts.length, 0);
               return (
                 <View key={groupKey} className="bg-card rounded-xl overflow-hidden py-0 p-0 mb-1">
-                  <View className="p-2 md:p-4">
+                  <View className="p-2">
                     <TouchableOpacity
-                      className="flex flex-row items-center gap-3 cursor-pointer hover:bg-muted/50 rounded p-2"
+                      className="flex flex-row items-center gap-2 cursor-pointer hover:bg-muted/50 rounded p-1"
                       onPress={() => toggleGroupCollapse(groupKey)}
                       activeOpacity={0.8}
                     >
-                      {isGroupCollapsed ? <ChevronRight size={16} className="h-4 w-4" /> : <ChevronDown size={16} className="h-4 w-4" />}
-                      <View className={`h-3 w-3 rounded-full ${isHeadOfFamily ? 'bg-blue-500' : 'bg-gray-500'}`} />
+                      {isGroupCollapsed ? <ChevronRight size={12} className="h-2.5 w-2.5" /> : <ChevronDown size={12} className="h-2.5 w-2.5" />}
+                      <View className={`h-1.5 w-1.5 rounded-full ${isHeadOfFamily ? 'bg-blue-500' : 'bg-gray-500'}`} />
                       <View className="flex-1">
-                        <Text className="font-semibold text-md md:text-lg">
+                        <Text className="font-semibold text-xs md:text-sm">
                           {isHeadOfFamily ? (sanitizeName(group.groupName) || "Family Group") : "Owner Portfolio"}
                         </Text>
-                        <Text className="text-sm text-muted-foreground">
+                        <Text className="text-[10px] text-muted-foreground">
                           {isHeadOfFamily ? (
                             `${Object.keys(group.owners).length} owner${Object.keys(group.owners).length !== 1 ? "s" : ""} | ${totalAccounts} account${totalAccounts !== 1 ? "s" : ""}`
                           ) : (
@@ -387,137 +390,137 @@ export default function FamilyPortfolioSection() {
                         </Text>
                       </View>
                       <View className="text-right">
-                        <Text className="font-bold text-lg md:text-xl text-primary">
+                        <Text className="font-bold text-sm md:text-base text-primary">
                           {formatCurrency(group.totalPortfolioValue)}
                         </Text>
-                        <Text className="text-xs md:text-sm text-muted-foreground">Total Value</Text>
+                        <Text className="text-[10px] text-muted-foreground">Total Value</Text>
                       </View>
                     </TouchableOpacity>
                     {!isGroupCollapsed && (
-                      <View className="ml-4 md:ml-6">
+                      <View className="ml-2 md:ml-3">
                         {Object.entries(group.owners)
                           .sort(([, a], [, b]) => (sanitizeName(a.ownerName) || "Unknown").localeCompare(sanitizeName(b.ownerName) || "Unknown"))
                           .map(([ownerKey, owner]) => {
                             const fullOwnerKey = `${groupKey}-${ownerKey}`;
                             const isOwnerCollapsed = collapsedOwners.has(fullOwnerKey);
                             return (
-                              <View key={fullOwnerKey} className="relative mb-4">
+                              <View key={fullOwnerKey} className="relative mb-2">
                                 {/* Owner tree line (visual only) */}
                                 <View className="absolute left-0 top-0 bottom-0 w-px bg-border" />
-                                <View className="absolute left-0 top-6 w-4 h-px bg-border" />
-                                <View className="ml-4 md:ml-6">
+                                <View className="absolute left-0 top-4 w-2.5 h-px bg-border" />
+                                <View className="ml-2 md:ml-3">
                                   <TouchableOpacity
-                                    className="flex flex-row items-center gap-3 mb-2 cursor-pointer hover:bg-muted/50 rounded p-1 -m-1"
+                                    className="flex flex-row items-center gap-1.5 mb-1 cursor-pointer hover:bg-muted/50 rounded p-1 -m-1"
                                     onPress={() => toggleOwnerCollapse(fullOwnerKey)}
                                     activeOpacity={0.8}
                                   >
                                     {isOwnerCollapsed ? (
-                                      <ChevronRight size={16} className="h-3 w-3 mr-1" />
+                                      <ChevronRight size={12} className="h-2 w-2 mr-0.5" />
                                     ) : (
-                                      <ChevronDown size={16} className="h-3 w-3 mr-1" />
+                                      <ChevronDown size={12} className="h-2 w-2 mr-0.5" />
                                     )}
-                                    <View className="h-2 w-2 rounded-full bg-green-500" />
+                                    <View className="h-1.5 w-1.5 rounded-full bg-green-500" />
                                     <View className="flex-1">
-                                      <Text className="font-medium">{sanitizeName(owner.ownerName) || 'Account Holder'}</Text>
-                                      <Text className="text-sm text-muted-foreground">
+                                      <Text className="font-medium text-xs">{sanitizeName(owner.ownerName) || 'Account Holder'}</Text>
+                                      <Text className="text-[10px] text-muted-foreground">
                                         {owner.accounts.length} account{owner.accounts.length !== 1 ? 's' : ''}
                                       </Text>
                                     </View>
                                     <View className="text-right">
-                                      <Text className="font-semibold text-md md:text-lg text-primary">
+                                      <Text className="font-semibold text-xs md:text-sm text-primary">
                                         {formatCurrency(owner.totalPortfolioValue)}
                                       </Text>
-                                      <Text className="text-xs text-muted-foreground">Owner Total</Text>
+                                      <Text className="text-[10px] text-muted-foreground">Owner Total</Text>
                                     </View>
                                   </TouchableOpacity>
                                   {!isOwnerCollapsed && (
-                                    <View className="ml-2 md:ml-4">
+                                    <View className="ml-1.5 md:ml-2">
                                       {owner.accounts.map((account, accountIdx) => {
                                         const accountKey = `${fullOwnerKey}-${account.clientid}`;
                                         const isAccountCollapsed = collapsedAccounts.has(accountKey);
                                         return (
-                                          <View key={`${account.clientid}-${accountIdx}`} className="relative mb-3">
+                                          <View key={`${account.clientid}-${accountIdx}`} className="relative mb-1.5">
                                             {/* Account tree line (visual, not absolute) */}
-                                            <View className="ml-2 md:ml-4">
+                                            <View className="ml-1.5 md:ml-2">
                                               <TouchableOpacity
-                                                className="flex flex-row items-center gap-3 mb-2 cursor-pointer hover:bg-muted/50 rounded p-2 -m-1"
+                                                className="flex flex-row items-center gap-1.5 mb-1 cursor-pointer hover:bg-muted/50 rounded p-1 -m-1"
                                                 onPress={() => toggleAccountCollapse(accountKey)}
                                                 activeOpacity={0.8}
                                               >
                                                 {isAccountCollapsed ? (
-                                                  <ChevronRight size={16} className="h-2 w-2" />
+                                                  <ChevronRight size={12} className="h-1.5 w-1.5" />
                                                 ) : (
-                                                  <ChevronDown size={16} className="h-2 w-2" />
+                                                  <ChevronDown size={12} className="h-1.5 w-1.5" />
                                                 )}
                                                 <View className="flex flex-row items-center gap-1">
                                                   {account.head_of_family ? (
-                                                    <Crown size={16} className="h-3 w-3 mr-1 text-blue-600" />
+                                                    <Crown size={12} className="h-2 w-2 mr-0.5 text-blue-600" />
                                                   ) : (
-                                                    <View className={`h-2 w-2 rounded-full ${account.relation === 'Primary' ? 'bg-orange-500' : 'bg-gray-400'}`}></View>
+                                                    <View className={`h-1.5 w-1.5 rounded-full ${account.relation === 'Primary' ? 'bg-orange-500' : 'bg-gray-400'}`}></View>
                                                   )}
                                                 </View>
                                                 <View className="flex-1">
-                                                  <View className="flex flex-row items-center gap-2">
-                                                    <Text className="font-medium text-sm md:text-base">{sanitizeName(account.holderName)}</Text>
+                                                  <View className="flex flex-row items-center gap-1">
+                                                    <Text className="font-medium text-xs">{sanitizeName(account.holderName)}</Text>
                                                     {account.head_of_family && isHeadOfFamily && (
-                                                      <View className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100 ml-2">
-                                                        <Text className="text-xs text-blue-700">Head</Text>
+                                                      <View className="text-[10px] bg-blue-50 text-blue-700 px-1 py-0.5 rounded border border-blue-100 ml-0.5">
+                                                        <Text className="text-[10px] text-blue-700">Head</Text>
                                                       </View>
                                                     )}
                                                   </View>
-                                                  <Text className="text-xs md:text-sm text-muted-foreground">
+                                                  <Text className="text-[10px] text-muted-foreground">
                                                     {account.clientcode} | {account.relation}
                                                     {account.reportDate && (
-                                                      <Text className="ml-1 md:ml-2">
+                                                      <Text className="ml-0.5">
                                                         • Updated: {new Date(account.reportDate).toLocaleDateString()}
                                                       </Text>
                                                     )}
                                                   </Text>
                                                 </View>
                                                 <View className="text-right items-center">
-                                                  <Text className="font-bold text-sm md:text-lg text-primary">{formatCurrency(account.portfolioValue)}</Text>
-                                                  <View className={`text-xs px-2 py-px rounded border ${getStatusColor(account.status)} mt-1`}>
-                                                    <Text className="text-xs">{account.status}</Text>
+                                                  <Text className="font-bold text-xs text-primary">{formatCurrency(account.portfolioValue)}</Text>
+                                                  <View className={`text-[10px] px-1.5 py-px rounded border ${getStatusColor(account.status)} mt-0.5`}>
+                                                    <Text className="text-[10px]">{account.status}</Text>
                                                   </View>
                                                 </View>
                                               </TouchableOpacity>
                                               {!isAccountCollapsed && (
-                                                <View className="ml-2 md:ml-4 p-3 bg-muted bg-opacity-20 rounded-lg border-l border-primary/20">
-                                                  <View className="flex flex-col md:flex-row flex-wrap gap-3">
-                                                    <View className="flex flex-row items-center gap-2 mb-2">
-                                                      <Hash size={16} className="h-3 w-3 mr-1 text-muted-foreground" />
+                                                <View className="ml-1 md:ml-2 p-2 bg-muted bg-opacity-20 rounded-lg border-l border-primary/20">
+                                                  <View className="flex flex-col md:flex-row flex-wrap gap-1.5">
+                                                    <View className="flex flex-row items-center gap-1 mb-1">
+                                                      <Hash size={12} className="h-2 w-2 mr-0.5 text-muted-foreground" />
                                                       <View>
-                                                        <Text className="text-muted-foreground">Client ID</Text>
-                                                        <Text className="font-medium">{account.clientid}</Text>
+                                                        <Text className="text-[10px] text-muted-foreground">Client ID</Text>
+                                                        <Text className="font-medium text-xs">{account.clientid}</Text>
                                                       </View>
                                                     </View>
-                                                    <View className="flex flex-row items-center gap-2 mb-2">
-                                                      <Mail size={16} className="h-3 w-3 mr-1 text-muted-foreground" />
+                                                    <View className="flex flex-row items-center gap-1 mb-1">
+                                                      <Mail size={12} className="h-2 w-2 mr-0.5 text-muted-foreground" />
                                                       <View>
-                                                        <Text className="text-muted-foreground">Email</Text>
-                                                        <Text className="font-medium">{account.email || 'N/A'}</Text>
+                                                        <Text className="text-[10px] text-muted-foreground">Email</Text>
+                                                        <Text className="font-medium text-xs">{account.email || 'N/A'}</Text>
                                                       </View>
                                                     </View>
                                                     {account.reportDate && (
-                                                      <View className="flex flex-row items-center gap-2 mb-2">
-                                                        <Calendar size={16} className="h-3 w-3 mr-1 text-muted-foreground" />
+                                                      <View className="flex flex-row items-center gap-1 mb-1">
+                                                        <Calendar size={12} className="h-2 w-2 mr-0.5 text-muted-foreground" />
                                                         <View>
-                                                          <Text className="text-muted-foreground">Last Updated</Text>
-                                                          <Text className="font-medium">{new Date(account.reportDate).toLocaleDateString('en-IN')}</Text>
+                                                          <Text className="text-[10px] text-muted-foreground">Last Updated</Text>
+                                                          <Text className="font-medium text-xs">{new Date(account.reportDate).toLocaleDateString('en-IN')}</Text>
                                                         </View>
                                                       </View>
                                                     )}
-                                                    <View className="flex flex-row items-center gap-2 mb-2">
-                                                      <TrendingUp size={16} className="h-3 w-3 mr-1 text-muted-foreground" />
+                                                    <View className="flex flex-row items-center gap-1 mb-1">
+                                                      <TrendingUp size={12} className="h-2 w-2 mr-0.5 text-muted-foreground" />
                                                       <View>
-                                                        <Text className="text-muted-foreground">Portfolio Value</Text>
-                                                        <Text className="font-bold text-primary">{formatCurrency(account.portfolioValue)}</Text>
+                                                        <Text className="text-[10px] text-muted-foreground">Portfolio Value</Text>
+                                                        <Text className="font-bold text-xs text-primary">{formatCurrency(account.portfolioValue)}</Text>
                                                       </View>
                                                     </View>
                                                     {account.mobile && (
-                                                      <View className="mt-2">
-                                                        <Text className="text-muted-foreground">Mobile</Text>
-                                                        <Text className="font-medium">{account.mobile}</Text>
+                                                      <View className="mt-1">
+                                                        <Text className="text-[10px] text-muted-foreground">Mobile</Text>
+                                                        <Text className="font-medium text-xs">{account.mobile}</Text>
                                                       </View>
                                                     )}
                                                   </View>
@@ -542,25 +545,25 @@ export default function FamilyPortfolioSection() {
           </View>
         )}
         {/* Summary Card */}
-        <View className="bg-primary-50 rounded-xl border border-primary p-4 md:p-6">
-          <View className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+        <View className="bg-primary-50 rounded-xl border border-primary p-3">
+          <View className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
             <View>
-              <Text className="font-semibold text-lg font-serif md:text-lg">
+              <Text className="font-semibold text-sm font-serif">
                 {isHeadOfFamily ? "Total Family Portfolio" : "Total Portfolio Value"}
               </Text>
-              <Text className="text-xs md:text-sm text-muted-foreground">
+              <Text className="text-[10px] text-muted-foreground">
                 {isHeadOfFamily
                   ? "Combined value across all family accounts"
                   : "Combined value across all your accounts"}
               </Text>
             </View>
             <View className="text-left md:text-right">
-              <Text className="text-2xl md:text-3xl font-bold text-primary">
+              <Text className="text-lg md:text-xl font-bold text-primary">
                 {formatCurrency(
                   Object.values(groupedAccounts).reduce((sum, group) => sum + group.totalPortfolioValue, 0)
                 )}
               </Text>
-              <Text className="text-xs md:text-sm text-muted-foreground">
+              <Text className="text-[10px] text-muted-foreground">
                 {familyAccounts.filter(acc => acc.status === "Active").length} Active Account
                 {familyAccounts.filter(acc => acc.status === "Active").length !== 1 ? 's' : ''}
               </Text>
@@ -569,5 +572,6 @@ export default function FamilyPortfolioSection() {
         </View>
       </View>
     </Container>
+    </ProtectedRoute>
   );
 }

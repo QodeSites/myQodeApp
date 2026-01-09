@@ -1,5 +1,6 @@
 import { api } from "@/api/axios";
 import { Container } from "@/components/Container";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import ModalComponent from "@/components/modal";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -349,7 +350,8 @@ export default function FamilyAccountsSection() {
     const modalTitle = `Send ${isHeadOfFamily ? "family" : "account"} request`;
 
     return (
-        <Container className="flex-1 bg-background p-4">
+        <ProtectedRoute requireInvestor>
+            <Container className="flex-1 bg-background p-4">
             <View className="flex gap-2">
             <View className="flex gap-3">
                     <View className="flex flex-row justify-between items-center gap-3">
@@ -641,5 +643,6 @@ export default function FamilyAccountsSection() {
                 </View>
             </ModalComponent>
         </Container>
+        </ProtectedRoute>
     );
 }

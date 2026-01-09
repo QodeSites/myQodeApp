@@ -57,14 +57,14 @@ function Pill({ children, color }: { children: React.ReactNode; color: string })
         borderColor: color,
         borderWidth: 2,
         borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: 48,
+        minHeight: 40,
         shadowOpacity: 0.08,
         elevation: 1,
-        marginBottom: 0, 
+        marginBottom: 0,
       }}
       // Tailwind/utility classes for RNW still present for web compatibility, but visual handled by style above
       className="flex justify-center items-center group relative overflow-hidden rounded-xl px-4 py-3 text-center font-medium text-gray-800 transition-all duration-300 hover:scale-105 hover:shadow-lg backdrop-blur-sm min-h-[3rem]"
@@ -77,11 +77,11 @@ function Pill({ children, color }: { children: React.ReactNode; color: string })
 export default function Page() {
   return (
     <Container className="p-4 w-full rounded-lg bg-card">
-      <View className="flex gap-2">
-        <Text className="flex gap-2 items-center font-serif text-2xl text-foreground">
+      <View className="flex gap-1.5">
+        <Text className="flex gap-2 items-center font-serif text-base text-foreground">
           Strategy Snapshot
         </Text>
-        <Text className="mb-2 text-lg text-muted-foreground">
+        <Text className="mb-1.5 text-xs text-muted-foreground">
           Discover Qode's investment strategies and their core pillars designed for different risk profiles and investment horizons.
         </Text>
       </View>
@@ -94,27 +94,27 @@ export default function Page() {
           end={{ x: 1, y: 0 }}
           style={{
             borderRadius: 24,
-            marginBottom: 24,
             padding: 1,
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 8 },
             shadowOpacity: 0.14,
             shadowRadius: 16,
             elevation: 2,
+            marginBottom: 12,
           }}
-          className="flex flex-col gap-1 mb-0 rounded-3xl"
+          className="flex flex-col gap-1 rounded-3xl"
         >
-            <View className="flex flex-row gap-[0.1] justify-start items-center mt-4 mb-2 ml-2">
+            <View className="flex flex-row gap-[0.1] justify-start items-center mt-3 mb-1.5 ml-2">
               <View
-                className="w-6 h-[1.5] rounded-full"
+                className="w-5 h-[1.5] rounded-full"
                 style={{ backgroundColor: 'white' }}
               />
-              <Text className="ml-2 font-serif text-2xl font-semibold text-white">
+              <Text className="ml-2 font-serif text-base font-semibold text-white">
                 {strat.title}
               </Text>
             </View>
             <View className="px-4 pb-2">
-              <Text className="mb-2 text-base text-white">
+              <Text className="mb-1.5 text-xs text-white">
                 {strat.description}
               </Text>
               <View className="flex flex-1 items-center">
@@ -132,13 +132,13 @@ export default function Page() {
         </LinearGradient>
       ))}
 
-      <View className="p-6 bg-gray-50 rounded-xl border">
-        <Text className="mb-2 text-lg font-semibold text-foreground">Glossary</Text>
-        <View className="space-y-3">
+      <View className="p-4 bg-gray-50 rounded-xl border">
+        <Text className="mb-2 text-base font-semibold text-foreground">Glossary</Text>
+        <View className="space-y-2">
           {Object.entries(GLOSSARY).map(([term, definition]) => (
             <View key={term} className="flex flex-col sm:flex-row">
-              <Text className="font-medium text-foreground min-w-[140px]">{term}</Text>
-              <Text className="text-sm leading-relaxed text-muted-foreground">{definition}</Text>
+              <Text className="font-medium text-xs text-foreground min-w-[140px]">{term}</Text>
+              <Text className="text-xs leading-relaxed text-muted-foreground">{definition}</Text>
             </View>
           ))}
         </View>

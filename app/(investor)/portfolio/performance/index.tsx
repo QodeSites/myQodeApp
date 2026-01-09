@@ -1,5 +1,6 @@
 import { api, pyapi } from "@/api/axios";
 import { Container } from "@/components/Container";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import FullscreenLoader from "@/components/layout/fullscreenloader";
 import {
   Select,
@@ -239,8 +240,8 @@ const CashFlowRow = React.memo(function CashFlowRow({
 }) {
   const isInflow = Number(item.cash_in_out) > 0;
   return (
-    <View className="flex flex-row px-4 py-2 items-center border-b border-b-1">
-      <Text className="flex-1 text-left text-sm">
+    <View className="flex flex-row px-3 py-2 items-center border-b border-border">
+      <Text className="flex-1 text-left text-xs text-foreground" numberOfLines={1}>
         {(() => {
           const d = parseDayMonthYearDateString(item.date);
           return d
@@ -253,9 +254,10 @@ const CashFlowRow = React.memo(function CashFlowRow({
         })()}
       </Text>
       <Text
-        className={`flex-1 text-right text-sm font-semibold ${
+        className={`flex-1 text-right text-xs font-medium ${
           isInflow ? "text-green-600" : "text-red-600"
         }`}
+        numberOfLines={1}
       >
         {isInflow ? "+" : "-"}
         {formatCurrency(Math.abs(Number(item.cash_in_out)))}
@@ -264,19 +266,19 @@ const CashFlowRow = React.memo(function CashFlowRow({
         <View
           className={`${
             isInflow
-              ? "bg-green-50 text-green-700 border-green-200"
-              : "bg-red-50 text-red-700 border-red-200"
-          } flex-row items-center gap-1 p-2 rounded-lg`}
+              ? "bg-green-50 border-green-200"
+              : "bg-red-50 border-red-200"
+          } flex-row items-center gap-1.5 px-2 py-1 rounded-md border`}
         >
           {isInflow ? (
             <>
-              <ArrowUpRight size={14} color="#22c55e" />
-              <Text className="text-xs">Inflow</Text>
+              <ArrowUpRight size={12} color="#22c55e" />
+              <Text className="text-xs font-medium text-green-700">Inflow</Text>
             </>
           ) : (
             <>
-              <ArrowDownRight size={14} color="#dc2626" />
-              <Text className="text-xs">Outflow</Text>
+              <ArrowDownRight size={12} color="#dc2626" />
+              <Text className="text-xs font-medium text-red-700">Outflow</Text>
             </>
           )}
         </View>
@@ -373,52 +375,68 @@ const PeriodicReturnsTable = React.memo(function PeriodicReturnsTable({
   }
   console.log(allPeriods, "================allPeriods");
 
-  const periodColumnWidthPercentage = 80;
-  const periodColumnWidthCash = 120; // increased width for cash mode
-  const yearColumnWidth = 90;
+  const periodColumnWidthPercentage = 65;
+  const periodColumnWidthCash = 95;
+  const yearColumnWidth = 60;
+  const rowHeight = 36; // Fixed height for all rows
 
   return (
-    <View className="bg-card border rounded-xl shadow-sm flex gap-2 p-5 my-5">
-      <View className="flex flex-row gap-1 text-lg font-bold text-foreground mb-2 justify-between items-center">
-        <Text className="flex gap-1 text-lg font-bold text-foreground">
+    <View className="bg-card border rounded-xl shadow-sm p-4">
+      <View className="flex flex-row justify-between items-center mb-3">
+        <Text className="text-lg font-bold text-foreground">
           {type === "monthly" ? "Monthly Returns" : "Quarterly Returns"}
         </Text>
         {onModeChange && (
-          <View className="flex flex-row items-center ml-4">
-            <Text className={`text-xs font-medium mr-1 ${mode === "percentage" ? "text-primary" : "text-gray-400"}`}>%</Text>
+          <View className="flex flex-row items-center gap-1">
+            <Text className={`text-[10px] font-medium ${mode === "percentage" ? "text-primary" : "text-gray-400"}`}>%</Text>
             <Switch
               value={mode === "cash"}
               onValueChange={(val) => onModeChange(val ? "cash" : "percentage")}
               trackColor={{ true: "#008455", false: "#ddd" }}
               thumbColor={mode === "cash" ? "#3b82f6" : "#ddd"}
-              style={{ marginHorizontal: 2 }}
+              style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }], marginHorizontal: 2 }}
             />
-            <Text className={`text-xs font-medium ml-1 ${mode === "cash" ? "text-primary" : "text-gray-400"}`}>₹</Text>
+            <Text className={`text-[10px] font-medium ${mode === "cash" ? "text-primary" : "text-gray-400"}`}>₹</Text>
           </View>
         )}
       </View>
-      <ScrollView horizontal className="w-full overflow-x-auto">
-        <View className="min-w-full">
-          {/* Table */}
-          <View className="border-collapse divide-y border-border">
-            {/* Header row */}
-            <View className="flex flex-row bg-muted border-border border-b">
-              <View
-                className="text-left px-4 py-2 text-xs font-medium text-foreground uppercase tracking-wider justify-center items-center"
-                style={{ width: yearColumnWidth }}
-              >
-                <Text>Year</Text>
+      <View className="flex flex-row">
+        {/* Frozen Year Column */}
+        <View className="border-r border-border">
+          <View className="bg-muted border-b border-border" style={{ height: rowHeight }}>
+            <View className="px-2 justify-center items-center h-full" style={{ width: yearColumnWidth }}>
+              <Text className="text-xs font-semibold text-foreground">Year</Text>
+            </View>
+          </View>
+          {years.length === 0 ? (
+            <View style={{ height: rowHeight }}>
+              <View className="px-2 h-full" style={{ width: yearColumnWidth }}>
+                <Text className="text-xs text-muted-foreground">—</Text>
               </View>
+            </View>
+          ) : (
+            years.map((year) => (
+              <View key={year} className="bg-muted/10 border-b border-border" style={{ height: rowHeight }}>
+                <View className="px-2 justify-center items-center h-full" style={{ width: yearColumnWidth }}>
+                  <Text className="text-xs font-semibold text-foreground">{year}</Text>
+                </View>
+              </View>
+            ))
+          )}
+        </View>
+
+        {/* Scrollable Periods */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={true} className="flex-1">
+          <View>
+            {/* Header row */}
+            <View className="flex flex-row bg-muted border-b border-border" style={{ height: rowHeight }}>
               {allPeriods.map((period) => (
                 <View
                   key={period}
-                  className={`text-center px-3 py-2 font-medium text-foreground uppercase tracking-wider justify-center items-center`}
-                  style={{ width: mode === "cash" ? periodColumnWidthCash : periodColumnWidthPercentage }}
+                  className="px-2 justify-center items-center border-r border-border"
+                  style={{ width: mode === "cash" ? periodColumnWidthCash : periodColumnWidthPercentage, height: rowHeight }}
                 >
-                  <Text
-                    className="text-xs"
-                    numberOfLines={2}
-                  >
+                  <Text className="text-xs font-semibold text-foreground" numberOfLines={1}>
                     {type === "monthly"
                       ? period === "Total"
                         ? "Total"
@@ -428,37 +446,28 @@ const PeriodicReturnsTable = React.memo(function PeriodicReturnsTable({
                 </View>
               ))}
             </View>
-            {/* Data rows: each year */}
+            {/* Data rows */}
             {years.length === 0 ? (
-              <View className="flex flex-row items-center py-3 px-4">
-                <Text className="text-xs text-muted-foreground italic">
-                  No data available.
-                </Text>
+              <View className="px-2" style={{ height: rowHeight }}>
+                <Text className="text-xs text-muted-foreground italic">No data</Text>
               </View>
             ) : (
               years.map((year) => (
-                <View className="flex flex-row border-border" key={year}>
-                  <View
-                    className="px-4 py-2 text-left text-xs font-semibold text-foreground justify-center items-center bg-muted/20"
-                    style={{ width: yearColumnWidth }}
-                  >
-                    <Text>{year}</Text>
-                  </View>
+                <View className="flex flex-row border-b border-border" key={year} style={{ height: rowHeight }}>
                   {allPeriods.map((period) => {
                     const val = currentData[year]?.[period];
                     const isPct = mode === "percentage";
-                    let text = "--";
+                    let text = "—";
                     let color = undefined;
                     if (val !== null && val !== undefined && !isNaN(Number(val))) {
                       if (isPct) {
-                        text = Number(val).toFixed(2) + "%";
+                        text = Number(val).toFixed(1) + "%";
                         color = isPositiveReturn(val)
                           ? "#008455"
                           : isNegativeReturn(val)
                           ? "#ef4444"
                           : undefined;
                       } else {
-                        // cash
                         text = formatCurrency(val);
                         color = isPositiveReturn(val)
                           ? "#008455"
@@ -469,16 +478,13 @@ const PeriodicReturnsTable = React.memo(function PeriodicReturnsTable({
                     }
                     return (
                       <View
-                        className={`px-3 py-2 text-center justify-center items-center${!isPct ? " whitespace-nowrap" : ""}`}
+                        className="px-2 justify-center items-center border-r border-border"
                         key={period}
-                        style={{ width: isPct ? periodColumnWidthPercentage : periodColumnWidthCash }}
+                        style={{ width: isPct ? periodColumnWidthPercentage : periodColumnWidthCash, height: rowHeight }}
                       >
-                        {/* Only for cash mode, set numberOfLines={1} and ellipsizeMode so value stays on one line */}
-                        {isPct ? (
-                          <Text style={{ color }}>{text}</Text>
-                        ) : (
-                          <Text style={{ color }} numberOfLines={1} ellipsizeMode="tail">{text}</Text>
-                        )}
+                        <Text className="text-xs font-medium" style={{ color }} numberOfLines={1}>
+                          {text}
+                        </Text>
                       </View>
                     );
                   })}
@@ -486,13 +492,8 @@ const PeriodicReturnsTable = React.memo(function PeriodicReturnsTable({
               ))
             )}
           </View>
-        </View>
-      </ScrollView>
-      {/* <Text className="text-gray-400 font-sans text-xs mt-2">
-        {mode === "percentage"
-          ? "Returns shown as % (absolute if less than 1 year, CAGR if more than 1 year)"
-          : "Returns shown in cash (₹) for each period."}
-      </Text> */}
+        </ScrollView>
+      </View>
     </View>
   );
 });
@@ -524,8 +525,9 @@ const TrailingReturnsTable = ({
   const trailingReturns = (metrics?.trailing_returns || {}) as { [key: string]: number | null | undefined };
   const trailingReturnsBenchmark = (benchmarkMetrics && (benchmarkMetrics?.trailing_returns || {})) as { [key: string]: number | null | undefined } | undefined;
 
-  const nameColumnWidth = 140;
-  const periodColumnWidth = 96;
+  const nameColumnWidth = 100;
+  const periodColumnWidth = 70;
+  const rowHeight = 36; // Fixed height for all rows
 
   const portfolioCurrentDD = metrics?.Drawdown !== undefined && metrics?.Drawdown !== null ? Math.abs(Number(metrics.Drawdown)) : null;
   const portfolioMaxDD = metrics?.MDD !== undefined && metrics?.MDD !== null ? Math.abs(Number(metrics.MDD)) : null;
@@ -540,77 +542,130 @@ const TrailingReturnsTable = ({
     (trailingReturnsBenchmark as any)["Since Inception"] = benchmarkMetrics["Since Inception"];
 
   return (
-    <View className="bg-card border rounded-xl shadow-sm flex gap-2 p-5">
-      <View className="flex flex-row gap-1 text-lg font-bold text-foreground">
-        <Text className="flex gap-1 text-lg font-bold text-foreground">Trailing Returns & Drawdown</Text>
+    <View className="bg-card border rounded-xl shadow-sm p-4">
+      <View className="mb-3">
+        <Text className="text-lg font-bold text-foreground">Trailing Returns & Drawdown</Text>
       </View>
-      <ScrollView horizontal className="w-full overflow-x-auto">
-        <View className="min-w-full">
-          {/* Table structure */}
-          <View className="border-collapse divide-y border-border">
-            {/* Head */}
-            <View className="bg-muted">
-              <View className="flex flex-row bg-muted/50 border-border border-b">
-                <View
-                  className="text-left px-4 py-2 text-sm font-medium text-foreground uppercase tracking-wider justify-center items-center"
-                  style={{ width: nameColumnWidth }}
-                >
-                  <Text className="text-left text-sm font-medium text-foreground uppercase tracking-wider">Name</Text>
-                </View>
-                {periods.map((period) => (
-                  <View
-                    key={period.key}
-                    className={`text-center px-4 py-2 font-medium text-foreground uppercase tracking-wider ${
-                      period.key === "Current DD" ? "border-l border-border" : ""
-                    } justify-center items-center`}
-                    style={{ width: periodColumnWidth }}
-                  >
-                    <Text
-                      className={`text-xs ${period.key === 'Current DD' || period.key === 'Max DD' || period.key === 'Since Inception' ? 'whitespace-normal break-words' : 'whitespace-nowrap'}`}
-                      numberOfLines={3}
-                    >
-                      {period.label}
-                    </Text>
-                  </View>
-                ))}
+      <View className="flex flex-row">
+        {/* Frozen Name Column */}
+        <View className="border-r border-border">
+          {/* Header */}
+          <View className="bg-muted border-b border-border" style={{ height: rowHeight }}>
+            <View className="px-2 justify-center items-start h-full" style={{ width: nameColumnWidth }}>
+              <Text className="text-xs font-semibold text-foreground uppercase">Name</Text>
+            </View>
+          </View>
+          {/* Portfolio Row */}
+          <View className="bg-muted/10 border-b border-border" style={{ height: rowHeight }}>
+            <View className="px-2 justify-center items-start h-full" style={{ width: nameColumnWidth }}>
+              <Text className="text-xs font-medium text-foreground">Portfolio (%)</Text>
+            </View>
+          </View>
+          {/* Benchmark Row */}
+          {trailingReturnsBenchmark && (
+            <View className="bg-muted/10" style={{ height: rowHeight }}>
+              <View className="px-2 justify-center items-start h-full" style={{ width: nameColumnWidth }}>
+                <Text className="text-xs font-medium text-foreground">BSE 500 (%)</Text>
               </View>
             </View>
-            {/* Body */}
-            <View className="divide-y divide-border">
-              {/* Portfolio */}
-              <View className="flex flex-row border-border">
+          )}
+        </View>
+
+        {/* Scrollable Periods */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={true} className="flex-1">
+          <View>
+            {/* Header Row */}
+            <View className="flex flex-row bg-muted border-b border-border" style={{ height: rowHeight }}>
+              {periods.map((period) => (
                 <View
-                  className="px-4 py-3 text-left whitespace-nowrap font-medium text-foreground justify-center items-center"
-                  style={{ width: nameColumnWidth }}
+                  key={period.key}
+                  className={`px-2 justify-center items-center ${
+                    period.key === "Current DD" ? "border-l border-border" : ""
+                  }`}
+                  style={{ width: periodColumnWidth, height: rowHeight }}
                 >
-                  <Text className="text-left font-medium text-foreground">Portfolio (%)</Text>
+                  <Text className="text-xs font-semibold text-foreground text-center uppercase" numberOfLines={2}>
+                    {period.label}
+                  </Text>
                 </View>
+              ))}
+            </View>
+
+            {/* Portfolio Data Row */}
+            <View className="flex flex-row border-b border-border bg-muted/10" style={{ height: rowHeight }}>
+              {periods.map((period) => {
+                let rawValue: any;
+                let displayValue: any;
+                let cellStyle: any = {};
+
+                if (period.key === 'Current DD') {
+                  rawValue = portfolioCurrentDD;
+                  displayValue = rawValue !== null && rawValue !== undefined ? `-${Number(rawValue).toFixed(1)}%` : "--";
+                  cellStyle = { color: '#ef4444' };
+                } else if (period.key === 'Max DD') {
+                  rawValue = portfolioMaxDD;
+                  displayValue = rawValue !== null && rawValue !== undefined ? `-${Number(rawValue).toFixed(1)}%` : "--";
+                  cellStyle = { color: '#ef4444' };
+                } else if (period.key === 'Since Inception') {
+                  rawValue = trailingReturns['Since Inception'];
+                  displayValue = rawValue !== undefined && rawValue !== null && !isNaN(Number(rawValue)) ? Number(rawValue).toFixed(1) + '%' : '--';
+                  cellStyle = isPositiveReturn(rawValue)
+                    ? { color: colors.strategy }
+                    : isNegativeReturn(rawValue)
+                    ? { color: '#ef4444' }
+                    : {};
+                } else {
+                  rawValue = trailingReturns[period.key];
+                  displayValue = rawValue !== undefined && rawValue !== null && !isNaN(Number(rawValue)) ? Number(rawValue).toFixed(1) + '%' : '--';
+                  cellStyle = isPositiveReturn(rawValue)
+                    ? { color: colors.strategy }
+                    : isNegativeReturn(rawValue)
+                    ? { color: '#ef4444' }
+                    : {};
+                }
+                return (
+                  <View
+                    key={period.key}
+                    className={`px-2 justify-center items-center ${period.key === "Current DD" ? "border-l border-border" : ""}`}
+                    style={{ width: periodColumnWidth, height: rowHeight }}
+                  >
+                    <Text className="text-xs" style={cellStyle}>
+                      {displayValue}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+
+            {/* Benchmark Data Row */}
+            {trailingReturnsBenchmark && (
+              <View className="flex flex-row bg-muted/10" style={{ height: rowHeight }}>
                 {periods.map((period) => {
                   let rawValue: any;
                   let displayValue: any;
                   let cellStyle: any = {};
 
                   if (period.key === 'Current DD') {
-                    rawValue = portfolioCurrentDD;
-                    displayValue = rawValue !== null && rawValue !== undefined ? `-${Number(rawValue).toFixed(2)}%` : "--";
+                    rawValue = benchmarkCurrentDD;
+                    displayValue = rawValue !== null && rawValue !== undefined ? `-${Number(rawValue).toFixed(1)}%` : "--";
                     cellStyle = { color: '#ef4444' };
                   } else if (period.key === 'Max DD') {
-                    rawValue = portfolioMaxDD;
-                    displayValue = rawValue !== null && rawValue !== undefined ? `-${Number(rawValue).toFixed(2)}%` : "--";
+                    rawValue = benchmarkMaxDD;
+                    displayValue = rawValue !== null && rawValue !== undefined ? `-${Number(rawValue).toFixed(1)}%` : "--";
                     cellStyle = { color: '#ef4444' };
                   } else if (period.key === 'Since Inception') {
-                    rawValue = trailingReturns['Since Inception'];
-                    displayValue = formatReturn(trailingReturns['Since Inception']);
+                    rawValue = trailingReturnsBenchmark['Since Inception'];
+                    displayValue = rawValue !== undefined && rawValue !== null && !isNaN(Number(rawValue)) ? Number(rawValue).toFixed(1) + '%' : '--';
                     cellStyle = isPositiveReturn(rawValue)
-                      ? { color: colors.strategy }
+                      ? { color: benchmarkColor }
                       : isNegativeReturn(rawValue)
                       ? { color: '#ef4444' }
                       : {};
                   } else {
-                    rawValue = trailingReturns[period.key];
-                    displayValue = formatReturn(trailingReturns[period.key]);
+                    rawValue = trailingReturnsBenchmark[period.key];
+                    displayValue = rawValue !== undefined && rawValue !== null && !isNaN(Number(rawValue)) ? Number(rawValue).toFixed(1) + '%' : '--';
                     cellStyle = isPositiveReturn(rawValue)
-                      ? { color: colors.strategy }
+                      ? { color: benchmarkColor }
                       : isNegativeReturn(rawValue)
                       ? { color: '#ef4444' }
                       : {};
@@ -618,75 +673,23 @@ const TrailingReturnsTable = ({
                   return (
                     <View
                       key={period.key}
-                      className={`px-4 py-3 text-center whitespace-nowrap ${period.key === "Current DD" ? "border-l border-border" : ""} justify-center items-center`}
-                      style={{ width: periodColumnWidth }}
+                      className={`px-2 justify-center items-center ${period.key === "Current DD" ? "border-l border-border" : ""}`}
+                      style={{ width: periodColumnWidth, height: rowHeight }}
                     >
-                      <Text style={cellStyle}>
+                      <Text className="text-xs" style={cellStyle}>
                         {displayValue}
                       </Text>
                     </View>
                   );
                 })}
               </View>
-              {/* Benchmark row */}
-              {trailingReturnsBenchmark && (
-                <View className="flex flex-row border-border">
-                <View
-                  className="px-4 py-3 text-left whitespace-nowrap font-medium text-foreground justify-center items-center"
-                  style={{ width: nameColumnWidth }}
-                >
-                  <Text className="text-left font-medium text-foreground">BSE 500 (%)</Text>
-                  </View>
-                  {periods.map((period) => {
-                    let rawValue: any;
-                    let displayValue: any;
-                    let cellStyle: any = {};
-
-                    if (period.key === 'Current DD') {
-                      rawValue = benchmarkCurrentDD;
-                      displayValue = rawValue !== null && rawValue !== undefined ? `-${Number(rawValue).toFixed(2)}%` : "--";
-                      cellStyle = { color: '#ef4444' };
-                    } else if (period.key === 'Max DD') {
-                      rawValue = benchmarkMaxDD;
-                      displayValue = rawValue !== null && rawValue !== undefined ? `-${Number(rawValue).toFixed(2)}%` : "--";
-                      cellStyle = { color: '#ef4444' };
-                    } else if (period.key === 'Since Inception') {
-                      rawValue = trailingReturnsBenchmark['Since Inception'];
-                      displayValue = formatReturn(trailingReturnsBenchmark['Since Inception']);
-                      cellStyle = isPositiveReturn(rawValue)
-                        ? { color: benchmarkColor }
-                        : isNegativeReturn(rawValue)
-                        ? { color: '#ef4444' }
-                        : {};
-                    } else {
-                      rawValue = trailingReturnsBenchmark[period.key];
-                      displayValue = formatReturn(trailingReturnsBenchmark[period.key]);
-                      cellStyle = isPositiveReturn(rawValue)
-                        ? { color: benchmarkColor }
-                        : isNegativeReturn(rawValue)
-                        ? { color: '#ef4444' }
-                        : {};
-                    }
-                    return (
-                      <View
-                        key={period.key}
-                    className={`px-4 py-3 text-center whitespace-nowrap ${period.key === "Current DD" ? "border-l border-border" : ""} justify-center items-center`}
-                    style={{ width: periodColumnWidth }}
-                      >
-                        <Text style={cellStyle}>
-                          {displayValue}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              )}
-            </View>
+            )}
           </View>
-        </View>
-        
-      </ScrollView>
-      <Text className="text-gray-400 font-sans text-xs">Returns: Periods under 1 year are presented as absolute, while those over 1 year are annualized (CAGR)</Text>
+        </ScrollView>
+      </View>
+      <Text className="text-muted-foreground font-sans text-xs mt-3">
+        Returns: Periods under 1 year are presented as absolute, while those over 1 year are annualized (CAGR)
+      </Text>
     </View>
   );
 };
@@ -1182,8 +1185,8 @@ export default function PortfolioPerformanceScreen() {
     <View
       style={{
         flexDirection: "row",
-        gap: 16,
-        marginTop: 12,
+        gap: 12,
+        marginTop: 8,
         marginLeft: 8,
         alignItems: "center",
       }}
@@ -1191,14 +1194,14 @@ export default function PortfolioPerformanceScreen() {
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         <View
           style={{
-            width: 16,
-            height: 3,
+            width: 14,
+            height: 2.5,
             backgroundColor: colors.strategy,
             borderRadius: 2,
           }}
         />
         <Text
-          style={{ fontSize: 13, color: "#333", fontWeight: "500" }}
+          style={{ fontSize: 11, color: "#333", fontWeight: "500" }}
         >
           Portfolio
         </Text>
@@ -1209,14 +1212,14 @@ export default function PortfolioPerformanceScreen() {
         >
           <View
             style={{
-              width: 16,
-              height: 3,
+              width: 14,
+              height: 2.5,
               backgroundColor: benchmarkColor,
               borderRadius: 2,
             }}
           />
           <Text
-            style={{ fontSize: 13, color: "#333", fontWeight: "500" }}
+            style={{ fontSize: 11, color: "#333", fontWeight: "500" }}
           >
             BSE 500
           </Text>
@@ -1230,8 +1233,8 @@ export default function PortfolioPerformanceScreen() {
     <View
       style={{
         flexDirection: "row",
-        gap: 16,
-        marginTop: 12,
+        gap: 12,
+        marginTop: 8,
         marginLeft: 8,
         alignItems: "center",
       }}
@@ -1239,14 +1242,14 @@ export default function PortfolioPerformanceScreen() {
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         <View
           style={{
-            width: 16,
-            height: 3,
+            width: 14,
+            height: 2.5,
             backgroundColor: colors.strategy,
             borderRadius: 2,
           }}
         />
         <Text
-          style={{ fontSize: 13, color: "#333", fontWeight: "500" }}
+          style={{ fontSize: 11, color: "#333", fontWeight: "500" }}
         >
           Portfolio Drawdown
         </Text>
@@ -1257,14 +1260,14 @@ export default function PortfolioPerformanceScreen() {
         >
           <View
             style={{
-              width: 16,
-              height: 3,
+              width: 14,
+              height: 2.5,
               backgroundColor: benchmarkColor,
               borderRadius: 2,
             }}
           />
           <Text
-            style={{ fontSize: 13, color: "#333", fontWeight: "500" }}
+            style={{ fontSize: 11, color: "#333", fontWeight: "500" }}
           >
             BSE 500 Drawdown
           </Text>
@@ -1276,10 +1279,10 @@ export default function PortfolioPerformanceScreen() {
   // Chart sections unchanged
 
   const chartSection = useMemo(() => (
-    <View className="bg-card border rounded-xl shadow-sm p-5">
-      <View className="flex flex-row gap-1 text-lg font-bold text-foreground">
-        <Activity size={20} style={{ marginRight: 6 }} color={colors.primary} />
-        <Text className="flex gap-1 text-lg font-bold text-foreground">NAV Performance</Text>
+    <View className="bg-card border rounded-xl shadow-sm p-4">
+      <View className="flex flex-row items-center gap-2 mb-3">
+        <Activity size={18} color={colors.primary} />
+        <Text className="text-lg font-bold text-foreground">NAV Performance</Text>
       </View>
       <View style={{ backgroundColor: "transparent", width: "100%" }}>
         {navSeriesForChart.portfolioLine.length > 0 ? (
@@ -1295,7 +1298,7 @@ export default function PortfolioPerformanceScreen() {
                 <VictoryChart
                   height={350}
                   width={chartWidth}
-                  padding={{ left: 50, right: 20, top: 20, bottom: 50 }}
+                  padding={{ left: 35, right: 10, top: 20, bottom: 50 }}
                   containerComponent={
                     <VictoryVoronoiContainer
                       width={chartWidth}
@@ -1381,7 +1384,7 @@ export default function PortfolioPerformanceScreen() {
                 }}
               >
                 <Activity size={32} color="#ddd" />
-                <Text className="text-sm text-muted-foreground mt-3">
+                <Text className="text-xs text-muted-foreground mt-3">
                   NAV performance data unavailable.
                 </Text>
               </View>
@@ -1397,7 +1400,7 @@ export default function PortfolioPerformanceScreen() {
             }}
           >
             <Activity size={32} color="#ddd" />
-            <Text className="text-sm text-muted-foreground mt-3">
+            <Text className="text-xs text-muted-foreground mt-3">
               NAV performance data unavailable.
             </Text>
           </View>
@@ -1407,14 +1410,12 @@ export default function PortfolioPerformanceScreen() {
   ), [chartWidth, navSeriesForChart, chartDataPortfolio, chartDataBenchmark, xTickValues, xTickFormat, yTickValues, colors.strategy, chartLegend]);
 
   const drawdownSection = useMemo(() => (
-    <View className="bg-card border rounded-xl shadow-sm p-5 mt-5">
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-        <View className=" flex flex-row gap-1 text-lg font-bold text-foreground">
-          <TrendingDown size={20} color="#ef4444" style={{ marginRight: 6 }} />
-          <Text className="flex gap-1 text-lg font-bold text-foreground">Drawdown Analysis</Text>
-        </View>
+    <View className="bg-card border rounded-xl shadow-sm p-4">
+      <View className="flex flex-row items-center gap-2 mb-3">
+        <TrendingDown size={18} color="#ef4444" />
+        <Text className="text-lg font-bold text-foreground">Drawdown Analysis</Text>
       </View>
-      <View style={{ backgroundColor: "transparent", width: "100%", marginTop: 10 }}>
+      <View style={{ backgroundColor: "transparent", width: "100%" }}>
         {drawdownChartData.length > 0 ? (
           <View style={{ width: "100%" }}>
             {chartWidth > 0 && drawdownChartData.length > 0 ? (
@@ -1422,7 +1423,7 @@ export default function PortfolioPerformanceScreen() {
                 <VictoryChart
                   height={350}
                   width={chartWidth}
-                  padding={{ left: 50, right: 20, top: 20, bottom: 50 }}
+                  padding={{ left: 35, right: 10, top: 20, bottom: 50 }}
                   containerComponent={
                     <VictoryVoronoiContainer
                       width={chartWidth}
@@ -1509,7 +1510,7 @@ export default function PortfolioPerformanceScreen() {
                 }}
               >
                 <Activity size={32} color="#ddd" />
-                <Text className="text-sm text-muted-foreground mt-3">
+                <Text className="text-xs text-muted-foreground mt-3">
                   Drawdown analysis data unavailable.
                 </Text>
               </View>
@@ -1525,7 +1526,7 @@ export default function PortfolioPerformanceScreen() {
             }}
           >
             <Activity size={32} color="#ddd" />
-            <Text className="text-sm text-muted-foreground mt-3">
+            <Text className="text-xs text-muted-foreground mt-3">
               Drawdown analysis data unavailable.
             </Text>
           </View>
@@ -1563,42 +1564,47 @@ export default function PortfolioPerformanceScreen() {
 
   // Show trailing, then periodic tables, then chart, as requested
   return (
-    <Container className="flex gap-2">
-      <View className="flex gap-2 justify-center">
-        <Text className="text-2xl font-serif text-foreground">
-          Portfolio Details
-        </Text>
-        <View className="flex flex-row font-sans flex-wrap gap-1 mt-1 items-center">
-          <Text className="text-sm font-sans h-full text-muted-foreground">
-            {selectedAccountLabel ?? "Select an account"}
+    <ProtectedRoute requireInvestor>
+      <Container className="flex gap-6 py-4">
+      <View className="flex gap-6">
+        {/* Header Section */}
+        <View className="flex gap-3">
+          <Text className="text-3xl font-serif font-bold text-foreground">
+            Portfolio Performance
           </Text>
-        </View>
-        {inceptionDate && latestDate ? (
-          <View className="flex flex-row flex-wrap items-center gap-3 mt-1">
-            <View className="flex flex-row items-center gap-1">
-              <Calendar size={16} color="#008455" />
-              <Text className="text-xs font-sans text-muted-foreground">
-                Inception:
-              </Text>
-              <Text className="text-xs font-sans font-medium text-primary">
-                {formatDate(inceptionDate)}
-              </Text>
-            </View>
-            <Text className="text-muted-foreground text-xs">•</Text>
-            <View className="flex flex-row items-center gap-1">
-              <Text className="text-xs font-sans text-muted-foreground">
-                Data as of:
-              </Text>
-              <Text className="text-xs font-sans font-medium text-primary">
-                {formatDate(latestDate)}
-              </Text>
-            </View>
+          <View className="flex flex-row font-sans flex-wrap gap-2 items-center">
+            <Text className="text-base font-sans text-muted-foreground">
+              {selectedAccountLabel ?? "Select an account"}
+            </Text>
           </View>
-        ) : null}
+          {inceptionDate && latestDate ? (
+            <View className="flex flex-row flex-wrap items-center gap-4">
+              <View className="flex flex-row items-center gap-2">
+                <Calendar size={16} color="#008455" />
+                <Text className="text-sm font-sans text-muted-foreground">
+                  Inception:
+                </Text>
+                <Text className="text-sm font-sans font-semibold text-primary">
+                  {formatDate(inceptionDate)}
+                </Text>
+              </View>
+              <Text className="text-muted-foreground text-sm">•</Text>
+              <View className="flex flex-row items-center gap-2">
+                <Text className="text-sm font-sans text-muted-foreground">
+                  Data as of:
+                </Text>
+                <Text className="text-sm font-sans font-semibold text-primary">
+                  {formatDate(latestDate)}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+        </View>
 
-        <Select value={selectedAccount} className="h-10 w-full" onValueChange={setSelectedAccount} placeholder="Select Account">
-          <SelectTrigger className="w-full mb-4 h-10 border rounded-lg p-2">
-            <SelectValue 
+        {/* Account Selector */}
+        <Select value={selectedAccount} className="h-12 w-full" onValueChange={setSelectedAccount} placeholder="Select Account">
+          <SelectTrigger className="w-full h-12 border rounded-lg px-4 py-3">
+            <SelectValue
               placeholder="Select Account"
               formatValue={(value) => getAccountLabel(value)}
             />
@@ -1607,10 +1613,10 @@ export default function PortfolioPerformanceScreen() {
             {(familyAccounts as FamilyAccount[]).map((acc) => (
               <SelectItem key={acc.clientcode} value={acc.clientcode}>
                 <View className="flex flex-row items-center justify-between gap-2">
-                  <Text className="text-base text-muted-foreground">
+                  <Text className="text-base text-foreground">
                     {acc.holderName}
                   </Text>
-                  <Text className="text-xs text-muted-foreground">
+                  <Text className="text-sm text-muted-foreground">
                     ({acc.clientcode})
                   </Text>
                 </View>
@@ -1618,49 +1624,51 @@ export default function PortfolioPerformanceScreen() {
             ))}
           </SelectContent>
         </Select>
-        
-        {/* Existing value boxes */}
-        <View className="flex flex-col gap-2">
-          <View className="flex-1 min-w-[150px] bg-card border rounded-xl shadow-sm p-5">
-            <View className="flex flex-row justify-between mb-2 items-center">
-              <Text className="text-sm text-muted-foreground font-medium">
+
+        {/* Portfolio Summary Cards */}
+        <View className="flex flex-col gap-4">
+          <View className="bg-card border rounded-xl shadow-sm p-6">
+            <View className="flex flex-row justify-between mb-3 items-center">
+              <Text className="text-sm text-muted-foreground font-semibold">
                 Amount Invested
               </Text>
-              <Wallet size={16} color="#2563eb" />
+              <Wallet size={18} color="#2563eb" />
             </View>
-            <Text className="text-2xl font-sans text-foreground">
+            <Text className="text-3xl font-sans font-bold text-foreground">
               {totalCashValue !== undefined && !isNaN(totalCashValue)
                 ? formatCurrency(totalCashValue)
                 : "--"}
             </Text>
-            <Text className="text-xs mt-1 text-muted-foreground">
+            <Text className="text-sm mt-2 text-muted-foreground">
               Total capital deployed
             </Text>
           </View>
 
-          <View className="flex-1 min-w-[150px] bg-card border rounded-xl shadow-sm p-5">
-            <View className="flex flex-row justify-between mb-2 items-center">
-              <Text className="text-sm text-muted-foreground font-medium">
+          <View className="bg-card border rounded-xl shadow-sm p-6">
+            <View className="flex flex-row justify-between mb-3 items-center">
+              <Text className="text-sm text-muted-foreground font-semibold">
                 Current Value
               </Text>
-              <RupeeIcon size={16} color="#16a34a" />
+              <RupeeIcon size={18} color="#16a34a" />
             </View>
-            <Text className="text-2xl font-sans text-primary">
+            <Text className="text-3xl font-sans font-bold text-primary">
               {typedCurrentData && typedCurrentData.portfolio_value != null
                 ? formatCurrency(typedCurrentData.portfolio_value)
                 : "--"}
             </Text>
-            <Text className="text-xs mt-1 text-muted-foreground" />
+            <Text className="text-sm mt-2 text-muted-foreground">
+              Current portfolio worth
+            </Text>
           </View>
 
-          <View className="flex-1 min-w-[150px] bg-card border rounded-xl shadow-sm p-5">
-            <View className="flex flex-row justify-between mb-2 items-center">
-              <Text className="text-sm text-muted-foreground font-medium">
+          <View className="bg-card border rounded-xl shadow-sm p-6">
+            <View className="flex flex-row justify-between mb-3 items-center">
+              <Text className="text-sm text-muted-foreground font-semibold">
                 Total Returns
               </Text>
-              <ArrowUpRight size={16} color="#888" />
+              <ArrowUpRight size={18} color="#888" />
             </View>
-            <Text className="text-2xl font-sans text-muted-foreground">
+            <Text className="text-3xl font-sans font-bold text-foreground">
               {typedCurrentData && typedCurrentData.portfolio_value != null
                 ? formatCurrency(
                     (typedCurrentData?.portfolio_value ?? 0) -
@@ -1668,19 +1676,19 @@ export default function PortfolioPerformanceScreen() {
                   )
                 : "--"}
             </Text>
-            <Text className="text-xs mt-1 text-muted-foreground">
+            <Text className="text-sm mt-2 text-muted-foreground">
               Absolute returns
             </Text>
           </View>
 
-          <View className="flex-1 min-w-[150px] bg-card border rounded-xl shadow-sm p-5">
-            <View className="flex flex-row justify-between mb-2 items-center">
-              <Text className="text-sm text-muted-foreground font-medium">
+          <View className="bg-card border rounded-xl shadow-sm p-6">
+            <View className="flex flex-row justify-between mb-3 items-center">
+              <Text className="text-sm text-muted-foreground font-semibold">
                 Returns %
               </Text>
-              <Percent size={16} color="#f59e42" />
+              <Percent size={18} color="#f59e42" />
             </View>
-            <Text className="text-2xl font-sans text-muted-foreground">
+            <Text className="text-3xl font-sans font-bold text-foreground">
               {typedCurrentData &&
               typedCurrentData.portfolio_value != null &&
               totalCashValue &&
@@ -1690,12 +1698,12 @@ export default function PortfolioPerformanceScreen() {
                       totalCashValue) *
                       100) /
                     totalCashValue
-                  ).toFixed(2) + " %"
+                  ).toFixed(2) + "%"
                 : "--"}
             </Text>
-            <View className="flex flex-row items-center gap-1 mt-1">
-              <TrendingUp size={14} color="#888" />
-              <Text className="text-xs text-muted-foreground">
+            <View className="flex flex-row items-center gap-2 mt-2">
+              <TrendingUp size={16} color="#888" />
+              <Text className="text-sm text-muted-foreground">
                 Percentage returns
               </Text>
             </View>
@@ -1732,27 +1740,27 @@ export default function PortfolioPerformanceScreen() {
         {drawdownSection}
 
         {/* ===== Cash Flow Table ===== */}
-        <View className="bg-card rounded-xl shadow-sm border">
-          <View className="flex flex-row items-center gap-2 px-4 py-3 ">
+        <View className="bg-card rounded-xl shadow-sm border p-4">
+          <View className="flex flex-row items-center gap-2 mb-3">
             <Calendar size={18} color="#008455" />
-            <Text className="text-base font-bold text-foreground">
+            <Text className="text-lg font-bold text-foreground">
               Cash Flow History
             </Text>
           </View>
           <View>
-            <View className="border-b border-border flex flex-row justify-between px-4 py-2">
-              <Text className="flex-1 text-left text-sm font-semibold text-foreground">
+            <View className="border-b border-border flex flex-row px-3 py-2 bg-muted">
+              <Text className="flex-1 text-left text-xs font-semibold text-foreground uppercase">
                 Date
               </Text>
-              <Text className="flex-1 text-right text-sm font-semibold text-foreground">
+              <Text className="flex-1 text-right text-xs font-semibold text-foreground uppercase">
                 Amount
               </Text>
-              <Text className="flex-1 text-right text-sm font-semibold text-foreground">
+              <Text className="flex-1 text-right text-xs font-semibold text-foreground uppercase">
                 Type
               </Text>
             </View>
-            <View className="w-full px-0">
-              <View className="bg-card rounded-b-xl">
+            <View className="w-full">
+              <View className="bg-card">
                 {cashFlowData && cashFlowData.length > 0 ? (
                   <>
                     {cashFlowData.map((item, idx) => (
@@ -1765,17 +1773,17 @@ export default function PortfolioPerformanceScreen() {
                       />
                     ))}
                     {/* TOTAL ROW */}
-                    <View className="flex flex-row px-4 py-2 items-center">
-                      <Text className="flex-1 text-left text-semibold text-primary">
+                    <View className="flex flex-row px-3 py-2 items-center bg-muted/20 border-t-2 border-border">
+                      <Text className="flex-1 text-left text-xs font-bold text-foreground">
                         Total
                       </Text>
                       <Text
-                        className={`flex-1 text-right text-sm font-semibold ${
+                        className={`flex-1 text-right text-xs font-bold ${
                           totalCashValue > 0
                             ? "text-green-600"
                             : totalCashValue < 0
                             ? "text-red-600"
-                            : "text-primary"
+                            : "text-foreground"
                         }`}
                       >
                         {formatCurrency(totalCashValue)}
@@ -1786,7 +1794,7 @@ export default function PortfolioPerformanceScreen() {
                 ) : (
                   <View className="py-8 flex-1 justify-center items-center">
                     <Activity size={32} color="#ddd" />
-                    <Text className="text-sm text-muted-foreground mt-3">
+                    <Text className="text-xs text-muted-foreground mt-3">
                       No cash flow history found.
                     </Text>
                   </View>
@@ -1797,5 +1805,6 @@ export default function PortfolioPerformanceScreen() {
         </View>
       </View>
     </Container>
+    </ProtectedRoute>
   );
 }

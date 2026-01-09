@@ -12,11 +12,11 @@ export default function Page() {
   return (
     <Container className="p-4 rounded-lg bg-card h-fit">
       {SnapShot.map((snap, idx) => (
-        <View key={snap.title} className="mb-6">
-          <Text className="mb-2 font-serif text-2xl font-semibold text-primary">
+        <View key={snap.title} className="mb-2">
+          <Text className="mb-1.5 font-serif text-base font-semibold text-primary">
             {snap.title}
           </Text>
-          <Text className="text-base text-card-foreground">
+          <Text className="text-xs text-card-foreground">
             {snap.description}
           </Text>
         </View>

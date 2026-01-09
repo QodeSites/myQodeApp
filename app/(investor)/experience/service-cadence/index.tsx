@@ -5,12 +5,12 @@ import { Text, View } from "react-native";
 
 function SectionHeader({ children, subtitle }: { children: React.ReactNode; subtitle?: string }) {
   return (
-    <View className="mb-6">
-      <Text className="text-xl font-serif text-foreground tracking-wide border-b border-border pb-2 mb-1">
+    <View className="mb-2">
+      <Text className="text-base font-serif text-foreground tracking-wide border-b border-border pb-1.5 mb-1">
         {children}
       </Text>
       {/* {subtitle ? (
-        <Text className="text-base text-muted-foreground mt-0.5">{subtitle}</Text>
+        <Text className="text-xs text-muted-foreground mt-0.5">{subtitle}</Text>
       ) : null} */}
     </View>
   );
@@ -24,20 +24,20 @@ function InfoCard({
 }: {
   title: string;
   children: React.ReactNode;
-  icon?: React.ComponentType<{ className?: string }>;
+  icon?: React.ComponentType<{ className?: string; size?: number }>;
   highlight?: boolean;
 }) {
   return (
-    <View className={`flex flex-col rounded-lg border border-border p-5 bg-card ${highlight ? "shadow-lg border-primary/70" : ""}`}>
-      <View className="mb-3 flex items-center gap-2 flex-row">
+    <View className={`flex flex-col rounded-lg border border-border p-3 bg-card ${highlight ? "shadow-lg border-primary/70" : ""}`}>
+      <View className="mb-2 flex items-center gap-2 flex-row">
         {Icon && (
-          <View className={`inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary opacity-50`}>
-            <Icon className="h-2 w-2 text-primary" aria-hidden="true" />
+          <View className={`inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary opacity-50`}>
+            <Icon className="h-2 w-2 text-primary" size={16} aria-hidden="true" />
           </View>
         )}
-        <Text className="text-xl font-serif text-foreground">{title}</Text>
+        <Text className="text-base font-serif text-foreground">{title}</Text>
       </View>
-      <View className="text-sm leading-relaxed font-sans text-card-foreground space-y-2">
+      <View className="text-xs leading-relaxed font-sans text-card-foreground space-y-2">
         {children}
       </View>
     </View>
@@ -189,17 +189,17 @@ const cadence = [
 export default function Page() {
   return (
     <Container className="p-4 rounded-lg bg-card h-fit">
-      <View className="mb-4 flex gap-1">
-        <Text className="flex gap-2 items-center font-serif text-2xl text-primary">
+      <View className="mb-2 flex gap-1">
+        <Text className="flex gap-2 items-center font-serif text-base text-primary">
           Reports & Review
         </Text>
-        <Text className="text-base text-muted-foreground">
+        <Text className="text-xs text-muted-foreground">
           Stay consistently informed with structured reports and timely reviews. From monthly updates to annual reviews, everything is designed to keep you aligned with your portfolio and goals.
         </Text>
       </View>
 
       {cadence.map((section) => (
-        <View key={section.section} className="mb-10">
+        <View key={section.section} className="mb-2">
           <SectionHeader subtitle={section.subtitle}>
             {section.section}
           </SectionHeader>

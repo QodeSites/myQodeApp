@@ -22,48 +22,48 @@ const FundManagers = [
 export default function Page() {
   return (
     <Container className="p-4 w-full rounded-lg bg-card">
-      <View className="flex justify-center items-center p-6 mb-2 bg-primary">
-        <Text className="font-serif text-2xl text-center text-accent">
+      <View className="flex justify-center items-center p-4 mb-2 bg-primary">
+        <Text className="font-serif text-lg text-center text-accent">
           Note from the Fund Manager
         </Text>
       </View>
       {FundManagers.map((manager, idx) => (
-        <View key={manager.name} className="flex flex-col gap-1 mb-6">
+        <View key={manager.name} className="flex flex-col gap-1 mb-4">
             <View className='flex flex-col items-center'>
             <Image
                 source={manager.photo}
                 resizeMode="cover"
-                className="rounded-lg h-[350] w-[300]"
+                className="rounded-lg h-[300] w-[250]"
             />
             </View>
-            
-            <View className='flex flex-col mb-2'>
-                <Text className="font-serif text-4xl font-semibold text-primary">
+
+            <View className='flex flex-col mb-1.5'>
+                <Text className="font-serif text-2xl font-semibold text-primary">
                     {manager.name}
                 </Text>
-                <Text className="text-xl font-normal text-primary">
+                <Text className="text-base font-normal text-primary">
                     {manager.title}
                 </Text>
             </View>
-            <Text className="text-base text-card-foreground">
+            <Text className="text-xs text-card-foreground">
                 {manager.description}
             </Text>
         </View>
-      ))} 
-      <View className="flex flex-col gap-4">
+      ))}
+      <View className="flex flex-col gap-3">
         <View className="flex overflow-hidden flex-col rounded-lg border border-primary">
-            <Text className="py-2 font-serif text-2xl text-center border-b bg-primary text-accent border-primary">
+            <Text className="py-1.5 font-serif text-lg text-center border-b bg-primary text-accent border-primary">
                 Mission
             </Text>
-            <Text className="p-4 text-card-foreground">
+            <Text className="p-3 text-xs text-card-foreground">
                 To support investors with data-driven, high-quality investment solutions that deliver superior risk-adjusted returns.
             </Text>
         </View>
         <View className="flex overflow-hidden flex-col rounded-lg border border-primary">
-            <Text className="py-2 font-serif text-2xl text-center border-b bg-primary text-accent border-primary">
+            <Text className="py-1.5 font-serif text-lg text-center border-b bg-primary text-accent border-primary">
                 Vision
             </Text>
-            <Text className="p-4 text-card-foreground">
+            <Text className="p-3 text-xs text-card-foreground">
                 To transform investment management with innovation and discipline, creating lasting value for our investors.
             </Text>
         </View>

@@ -2,6 +2,7 @@
 
 import { api } from "@/api/axios";
 import { Container } from '@/components/Container';
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import { useClient } from "@/context/ClientContext";
 import { ChevronDown, ChevronRight, FileText, Loader2 } from "lucide-react-native";
@@ -154,12 +155,13 @@ export default function Page() {
   };
 
   return (
-    <Container className="p-4 rounded-lg bg-card h-fit">
+    <ProtectedRoute requireInvestor>
+      <Container className="p-4 rounded-lg bg-card h-fit">
       <View className="flex gap-2">
-        <Text className="flex gap-2 items-center font-serif text-2xl text-foreground">
+        <Text className="flex gap-2 items-center font-serif text-lg text-foreground">
         Account Documents
         </Text>
-        <Text className="mb-2 text-lg text-muted-foreground">
+        <Text className="mb-2 text-base text-muted-foreground">
         Access important documents related to your Qode PMS account.
         </Text>
       </View>
@@ -169,20 +171,20 @@ export default function Page() {
         {clientLoading ? (
           <View>
             {[...Array(3)].map((_, index) => (
-              <View key={index} className="p-4 border-b last:border-b-0">
-                <View className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
+              <View key={index} className="p-3 border-b last:border-b-0">
+                <View className="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
                   <View className="max-w-3xl animate-pulse">
-                    <View className="h-6 w-48 bg-gray-200 rounded mb-2" />
-                    <View className="h-4 w-96 bg-gray-200 rounded" />
+                    <View className="h-5 w-48 bg-gray-200 rounded mb-1.5" />
+                    <View className="h-3 w-96 bg-gray-200 rounded" />
                   </View>
-                  <View className="h-4 w-24 bg-gray-200 rounded" />
+                  <View className="h-3 w-24 bg-gray-200 rounded" />
                 </View>
               </View>
             ))}
           </View>
         ) : docSections.length === 0 ? (
-          <View className="p-4 text-center">
-            <Text className="text-sm text-muted-foreground">No documents found for this client.</Text>
+          <View className="p-3 text-center">
+            <Text className="text-xs text-muted-foreground">No documents found for this client.</Text>
           </View>
         ) : (
           <View>
@@ -193,15 +195,15 @@ export default function Page() {
                   key={section.id}
                   className={!isLast ? "border-b border-1" : ""}
                 >
-                  <View className={`flex-row justify-between items-start p-4 pb-2 border-1${!isLast ? "" : ""}`}>
+                  <View className={`flex-row justify-between items-start p-3 pb-1.5 border-1${!isLast ? "" : ""}`}>
                     <View className="flex-1 flex-row max-w-3xl">
-                      <View className="flex-col gap-2 flex w-full">
-                        <View className="flex flex-row items-center gap-2 w-full">
+                      <View className="flex-col gap-1.5 flex w-full">
+                        <View className="flex flex-row items-center gap-1.5 w-full">
                           {/* Dropdown, title, file count, and view files button are always inline and truncate/wrap as needed */}
                           <TouchableOpacity
                             onPress={() => toggleSection(section.id)}
                             disabled={section.disabled}
-                            className={`flex flex-row items-center gap-2 text-left min-w-0 flex-1 ${section.disabled
+                            className={`flex flex-row items-center gap-1.5 text-left min-w-0 flex-1 ${section.disabled
                               ? "opacity-50"
                               : "active:opacity-80"}`}
                             accessibilityRole="button"
@@ -209,14 +211,14 @@ export default function Page() {
                             style={{ flex: 1 }}
                           >
                             {section.loading ? (
-                              <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
+                              <Loader2 className="h-3 w-3 animate-spin flex-shrink-0" />
                             ) : section.expanded ? (
-                              <ChevronDown className="h-4 w-4 flex-shrink-0" />
+                              <ChevronDown className="h-3 w-3 flex-shrink-0" />
                             ) : (
-                              <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                              <ChevronRight className="h-3 w-3 flex-shrink-0" />
                             )}
                             <Text
-                              className="text-lg font-serif text-foreground"
+                              className="text-base font-serif text-foreground"
                               // numberOfLines={1}
                               ellipsizeMode="tail"
                               style={{ flexShrink: 1, flexGrow: 1, minWidth: 0 }}
@@ -224,21 +226,21 @@ export default function Page() {
                               {section.title}
                             </Text>
                             {section.files.length > 0 && (
-                              <Text className="text-xs bg-muted px-2 py-0.5 rounded-full ml-2 whitespace-nowrap flex-shrink-0">
+                              <Text className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full ml-1.5 whitespace-nowrap flex-shrink-0">
                                 {section.files.length} file{section.files.length !== 1 ? "s" : ""}
                               </Text>
                             )}
                           </TouchableOpacity>
-                          <View className="text-sm font-medium ml-2 flex-shrink-0 flex flex-row gap-2">
+                          <View className="text-xs font-medium ml-1.5 flex-shrink-0 flex flex-row gap-1.5">
                             {section.disabled ? (
-                              <Text className="text-muted-foreground">Not available</Text>
+                              <Text className="text-xs text-muted-foreground">Not available</Text>
                             ) : (
                               <>
                                 {section.hasError && (
                                   <Button
                                     onPress={() => retryFetch()}
                                     variant="outline"
-                                    size="lg"
+                                    size="sm"
                                     disabled={section.loading}
                                   >
                                     Retry
@@ -246,8 +248,8 @@ export default function Page() {
                                 )}
                                 <Button
                                   onPress={() => toggleSection(section.id)}
-                                  className="bg-primary p-2 rounded-lg"
-                                  size="lg"
+                                  className="bg-primary p-1.5 rounded-lg"
+                                  size="sm"
                                 >
                                   {section.expanded ? "Collapse" : "View Files"}
                                 </Button>
@@ -255,10 +257,10 @@ export default function Page() {
                             )}
                           </View>
                         </View>
-                        <Text className="mt-1 text-sm text-muted-foreground ml-6">
+                        <Text className="mt-0.5 text-xs text-muted-foreground ml-5">
                           {section.description}
                           {section.hasError && (
-                            <Text className="text-destructive ml-2">
+                            <Text className="text-destructive ml-1.5">
                               (Failed to load documents)
                             </Text>
                           )}
@@ -270,15 +272,15 @@ export default function Page() {
                   {section.expanded && (
                     <View className="bg-muted/20 border-t">
                       {section.loading ? (
-                        <View className="p-4 flex flex-row items-center justify-center gap-2">
+                        <View className="p-3 flex flex-row items-center justify-center gap-1.5">
                           <ActivityIndicator size="small" />
-                          <Text className="text-sm text-muted-foreground ml-2">
+                          <Text className="text-xs text-muted-foreground ml-1.5">
                             Loading files...
                           </Text>
                         </View>
                       ) : section.files.length === 0 ? (
-                        <View className="p-4">
-                          <Text className="text-center text-sm text-muted-foreground">
+                        <View className="p-3">
+                          <Text className="text-center text-xs text-muted-foreground">
                             {section.hasError
                               ? "Failed to load files. Please try again."
                               : "No files found in this section."
@@ -290,13 +292,13 @@ export default function Page() {
                           {section.files.map((file, index) => (
                             <View
                               key={`${section.id}-${index}`}
-                              className={`p-4 pl-10 flex-row items-center justify-between gap-3${index !== section.files.length - 1 ? " border-b" : ""}`}
+                              className={`p-3 pl-8 flex-row items-center justify-between gap-2${index !== section.files.length - 1 ? " border-b" : ""}`}
                             >
-                              <View className="flex-row items-center gap-3 flex-1 min-w-0">
-                                <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                              <View className="flex-row items-center gap-2 flex-1 min-w-0">
+                                <FileText className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                                 <View className="min-w-0">
                                   <Text
-                                    className="text-sm font-medium"
+                                    className="text-xs font-medium"
                                     numberOfLines={1}
                                     ellipsizeMode="tail"
                                   >
@@ -310,7 +312,7 @@ export default function Page() {
                                 accessibilityRole="link"
                                 accessibilityLabel={`Open ${file.name}`}
                               >
-                                <Text className="text-sm font-medium text-primary underline">
+                                <Text className="text-xs font-medium text-primary underline">
                                   Open
                                 </Text>
                               </TouchableOpacity>
@@ -327,5 +329,6 @@ export default function Page() {
         )}
       </View>
     </Container>
+    </ProtectedRoute>
   );
 }
