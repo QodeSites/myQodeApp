@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import React from "react";
-import { Text, TouchableOpacity } from "react-native";
+import { Pressable, Text } from "react-native";
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
 type ButtonProps = {
   onPress: () => void;
@@ -59,16 +60,26 @@ export function Button({
       ? "text-white"
       : "text-white";
 
+  const pressed = useSharedValue(0);
+  const aStyle = useAnimatedStyle(() => {
+    const scale = withTiming(pressed.value ? 0.98 : 1, {
+      duration: 180,
+      easing: Easing.out(Easing.cubic),
+    });
+    return { transform: [{ scale }] };
+  });
+
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
-      className={classes}
-      style={style}
       disabled={disabled}
       accessibilityRole="button"
-      activeOpacity={disabled ? 1 : 0.7}
+      onPressIn={() => (pressed.value = 1)}
+      onPressOut={() => (pressed.value = 0)}
     >
-      <Text className={textColor}>{children}</Text>
-    </TouchableOpacity>
+      <Animated.View className={classes} style={[style, aStyle, disabled ? { opacity: 0.55 } : null]}>
+        <Text className={textColor}>{children}</Text>
+      </Animated.View>
+    </Pressable>
   );
 }

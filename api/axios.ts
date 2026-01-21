@@ -10,6 +10,7 @@ function ensureHeaders(config: any) {
 // Axios instances (fixed for correct env var names, fallback, and consistent export)
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "";
 const PY_BASE_URL = process.env.EXPO_PUBLIC_PYTHON_API_URL || process.env.PYTHON_PUBLIC_API_URL || "";
+const AUTH_BASE_URL = process.env.EXPO_PUBLIC_AUTH_API_URL  || "";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -25,7 +26,15 @@ const pyapi = axios.create({
   },
 });
 
-export { api, pyapi };
+
+const authapi = axios.create({
+  baseURL: AUTH_BASE_URL,
+  headers: {
+    "X-Client-Type": "native",
+  },
+});
+
+export { api, pyapi, authapi };
 
 
 let refreshing = false as boolean;
@@ -83,8 +92,8 @@ async function handleAuthError(error: any, originApi: typeof api | typeof pyapi)
       try {
         // Request new tokens
         const res = await axios.post(
-          `${process.env.EXPO_PUBLIC_API_URL}/api/auth/refresh`,
-          { refreshToken },
+          `${AUTH_BASE_URL}/auth/refresh`,
+          { refresh_token : refreshToken },
           { headers: { "X-Client-Type": "native" } }
         );
         const { accessToken, refreshToken: newRefreshToken } = res.data;
@@ -127,4 +136,8 @@ pyapi.interceptors.response.use(
   error => handleAuthError(error, pyapi)
 );
 
+authapi.interceptors.response.use(
+  response => response,
+  error => handleAuthError(error, pyapi)
+);
 

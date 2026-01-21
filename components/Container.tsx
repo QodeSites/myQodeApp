@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView } from 'react-native';
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 interface ContainerProps {
   className?: string;
@@ -11,9 +12,14 @@ export const Container = ({ children, className = '' }: React.PropsWithChildren<
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ flexGrow: 1, paddingBottom: 32 }}
       keyboardShouldPersistTaps="handled"
-      className={`w-content bg-card p-4 rounded-lg ${className}`}
+      className={`w-content bg-transparent px-4 py-4 ${className}`}
     >
-      {children}
+      <Animated.View
+        entering={FadeInDown.duration(260)}
+        style={{ flex: 1 }}
+      >
+        {children}
+      </Animated.View>
     </ScrollView>
   );
 };

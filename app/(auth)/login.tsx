@@ -119,6 +119,8 @@ export default function LoginScreen() {
       if (data.error) {
         throw new Error(data.error || 'Dev bypass login failed');
       }
+      await tokenStorage.setAccess(data.accessToken);
+      await tokenStorage.setRefresh(data.refreshToken);
       await refresh();
       goToRoute(data.clientType === "DISTRIBUTORS" ? 'DistributorFees' : 'PortfolioPerformance');
     } catch (err: any) {
@@ -242,9 +244,11 @@ export default function LoginScreen() {
       });
 
       const data = response.data;
+      console.log(data,"===========data")
 
       if (!data.success) throw new Error(data.error || 'Login failed');
       await tokenStorage.setAccess(data.accessToken);
+      await tokenStorage.setRefresh(data.refreshToken);
       await refresh();
 
       goToRoute(data.clientType === "DISTRIBUTORS" ? 'DistributorFees' : 'PortfolioPerformance');
